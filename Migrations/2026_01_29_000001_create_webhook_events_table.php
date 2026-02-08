@@ -36,8 +36,9 @@ return new class extends Migration
             $table->unsignedSmallInteger('http_status_code')->nullable();
 
             // Related entities (for linking/audit)
-            $table->foreignId('order_id')->nullable()->constrained('orders')->nullOnDelete();
-            $table->foreignId('subscription_id')->nullable()->constrained('subscriptions')->nullOnDelete();
+            // No FK constraint — orders/subscriptions tables are created by the billing module
+            $table->unsignedBigInteger('order_id')->nullable()->index();
+            $table->unsignedBigInteger('subscription_id')->nullable()->index();
 
             // Timestamps
             $table->timestamp('received_at');
@@ -51,8 +52,6 @@ return new class extends Migration
             // Query indexes
             $table->index(['gateway', 'status', 'received_at']);
             $table->index(['gateway', 'event_type']);
-            $table->index(['order_id']);
-            $table->index(['subscription_id']);
             $table->index(['status', 'received_at']);
         });
     }
