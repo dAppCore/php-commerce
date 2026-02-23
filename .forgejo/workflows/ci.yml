@@ -7,7 +7,63 @@ on:
     branches: [main]
 
 jobs:
-  tests:
-    uses: core/php/.forgejo/workflows/php-test.yml@main
-    with:
-      coverage: true
+  test:
+    name: PHP ${{ matrix.php }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: true
+      matrix:
+        php: ["8.3", "8.4"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: https://github.com/shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite
+          coverage: pcov
+
+      - name: Checkout dependencies
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if grep -q '"path":' composer.json 2>/dev/null; then
+            for path in $(php -r "
+              \$d = json_decode(file_get_contents('composer.json'), true);
+              foreach (\$d['repositories'] ?? [] as \$r) {
+                if ((\$r['type'] ?? '') === 'path') echo \$r['url'] . \"\\n\";
+              }
+            "); do
+              dir_name=$(basename "$path")
+              if [ ! -d "$path" ]; then
+                echo "Cloning $dir_name into $path"
+                git clone --depth 1 \
+                  "https://x-access-token:${GITHUB_TOKEN}@forge.lthn.ai/core/${dir_name}.git" \
+                  "$path" || echo "Warning: Failed to clone $dir_name"
+              fi
+            done
+          fi
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Run Pint
+        run: |
+          if [ -f vendor/bin/pint ]; then
+            vendor/bin/pint --test
+          else
+            echo "Pint not installed, skipping"
+          fi
+
+      - name: Run tests
+        run: |
+          if [ -f vendor/bin/pest ]; then
+            vendor/bin/pest --ci --coverage
+          elif [ -f vendor/bin/phpunit ]; then
+            vendor/bin/phpunit --coverage-text
+          else
+            echo "No test runner found, skipping"
+          fi
