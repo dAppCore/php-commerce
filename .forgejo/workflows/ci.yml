@@ -1,0 +1,13 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  tests:
+    uses: core/php/.forgejo/workflows/php-test.yml@main
+    with:
+      coverage: true
