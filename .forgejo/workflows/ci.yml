@@ -10,6 +10,8 @@ jobs:
   test:
     name: PHP ${{ matrix.php }}
     runs-on: ubuntu-latest
+    container:
+      image: lthn/build:php-\${{ matrix.php }}
 
     strategy:
       fail-fast: true
@@ -18,13 +20,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: https://github.com/shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite
-          coverage: pcov
 
       - name: Clone sister packages
         env:
