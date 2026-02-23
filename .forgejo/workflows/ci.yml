@@ -29,13 +29,15 @@ jobs:
       - name: Checkout path dependencies
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
         run: |
-          for path in $(php -r "
-            \$d = json_decode(file_get_contents('composer.json'), true);
-            foreach (\$d['repositories'] ?? [] as \$r) {
-              if ((\$r['type'] ?? '') === 'path') echo \$r['url'] . \"\\n\";
+          php -r '
+            $d = json_decode(file_get_contents("composer.json"), true);
+            foreach ($d["repositories"] ?? [] as $r) {
+              if (($r["type"] ?? "") === "path") echo $r["url"] . "\n";
             }
-          "); do
+          ' | while IFS= read -r path; do
+            [ -z "$path" ] && continue
             dir_name=$(basename "$path")
             if [ ! -d "$path" ]; then
               echo "Cloning $dir_name into $path"
