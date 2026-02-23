@@ -1,8 +1,6 @@
 <?php
 
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Notification;
 use Core\Mod\Commerce\Models\Invoice;
 use Core\Mod\Commerce\Models\Subscription;
 use Core\Mod\Commerce\Notifications\AccountSuspended;
@@ -14,6 +12,8 @@ use Core\Tenant\Models\Package;
 use Core\Tenant\Models\User;
 use Core\Tenant\Models\Workspace;
 use Core\Tenant\Models\WorkspacePackage;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Notification;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 

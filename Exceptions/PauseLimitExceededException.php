@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Core\Mod\Commerce\Exceptions;
 
-use Exception;
 use Core\Mod\Commerce\Models\Subscription;
+use Exception;
 
 /**
  * Exception thrown when a subscription has exceeded its pause cycle limit.

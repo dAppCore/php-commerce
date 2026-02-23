@@ -8,14 +8,14 @@ use Core\Events\AdminPanelBooting;
 use Core\Events\ApiRoutesRegistering;
 use Core\Events\ConsoleBooting;
 use Core\Events\WebRoutesRegistering;
-use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\ServiceProvider;
 use Core\Mod\Commerce\Listeners\ProvisionSocialHostSubscription;
 use Core\Mod\Commerce\Listeners\RewardAgentReferralOnSubscription;
 use Core\Mod\Commerce\Services\PaymentGateway\BTCPayGateway;
 use Core\Mod\Commerce\Services\PaymentGateway\PaymentGatewayContract;
 use Core\Mod\Commerce\Services\PaymentGateway\StripeGateway;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\ServiceProvider;
 
 /**
  * Commerce Module Boot

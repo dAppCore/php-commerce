@@ -1,7 +1,5 @@
 <?php
 
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Event;
 use Core\Mod\Commerce\Events\SubscriptionRenewed;
 use Core\Mod\Commerce\Jobs\ProcessSubscriptionRenewal;
 use Core\Mod\Commerce\Models\Subscription;
@@ -13,6 +11,8 @@ use Core\Tenant\Models\User;
 use Core\Tenant\Models\Workspace;
 use Core\Tenant\Models\WorkspacePackage;
 use Core\Tenant\Services\EntitlementService;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Event;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 

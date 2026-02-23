@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Core\Mod\Commerce\Console;
 
 use Core\Mod\Commerce\Models\Subscription;
-use Mod\Trees\Models\TreePlanting;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use Mod\Trees\Models\TreePlanting;
 
 /**
  * Plants trees for active subscribers.

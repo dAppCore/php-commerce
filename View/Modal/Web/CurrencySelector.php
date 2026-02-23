@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Core\Mod\Commerce\View\Modal\Web;
 
+use Core\Mod\Commerce\Services\CurrencyService;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
-use Core\Mod\Commerce\Services\CurrencyService;
 
 /**
  * Currency selector component.

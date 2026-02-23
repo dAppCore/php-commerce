@@ -5,17 +5,17 @@ declare(strict_types=1);
 namespace Core\Mod\Commerce\Controllers\Api;
 
 use Core\Front\Controller;
-use Core\Tenant\Models\Package;
-use Core\Tenant\Models\Workspace;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Core\Mod\Commerce\Models\Invoice;
 use Core\Mod\Commerce\Models\Order;
 use Core\Mod\Commerce\Models\Subscription;
 use Core\Mod\Commerce\Services\CommerceService;
 use Core\Mod\Commerce\Services\InvoiceService;
 use Core\Mod\Commerce\Services\SubscriptionService;
+use Core\Tenant\Models\Package;
+use Core\Tenant\Models\Workspace;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * Commerce REST API for MCP agents and external integrations.

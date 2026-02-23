@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Core\Mod\Commerce\Console;
 
-use Illuminate\Console\Command;
 use Core\Mod\Commerce\Services\CurrencyService;
+use Illuminate\Console\Command;
 
 /**
  * Refresh exchange rates from configured provider.

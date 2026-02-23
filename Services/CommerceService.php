@@ -184,11 +184,10 @@ class CommerceService
      * also applies rate limiting.
      *
      * @param  Request|null  $request  The HTTP request for rate limiting (auto-resolved if null)
+     * @return array{order: Order, session_id: string, checkout_url: string, fraud_assessment?: FraudAssessment}
      *
      * @throws CheckoutRateLimitException When rate limit is exceeded
      * @throws FraudBlockedException When order is blocked due to high fraud risk
-     *
-     * @return array{order: Order, session_id: string, checkout_url: string, fraud_assessment?: FraudAssessment}
      */
     public function createCheckout(
         Order $order,

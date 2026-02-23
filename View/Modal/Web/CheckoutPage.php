@@ -2,13 +2,6 @@
 
 namespace Core\Mod\Commerce\View\Modal\Web;
 
-use Core\Tenant\Models\Package;
-use Core\Tenant\Models\Workspace;
-use Illuminate\Support\Facades\Auth;
-use Livewire\Attributes\Computed;
-use Livewire\Attributes\Layout;
-use Livewire\Attributes\Url;
-use Livewire\Component;
 use Core\Mod\Commerce\Models\Coupon;
 use Core\Mod\Commerce\Models\ExchangeRate;
 use Core\Mod\Commerce\Models\Order;
@@ -17,6 +10,13 @@ use Core\Mod\Commerce\Services\CommerceService;
 use Core\Mod\Commerce\Services\CouponService;
 use Core\Mod\Commerce\Services\CurrencyService;
 use Core\Mod\Commerce\Services\TaxService;
+use Core\Tenant\Models\Package;
+use Core\Tenant\Models\Workspace;
+use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
+use Livewire\Component;
 
 #[Layout('shared::layouts.checkout')]
 class CheckoutPage extends Component

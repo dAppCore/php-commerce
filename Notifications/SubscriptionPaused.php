@@ -2,11 +2,11 @@
 
 namespace Core\Mod\Commerce\Notifications;
 
+use Core\Mod\Commerce\Models\Subscription;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use Core\Mod\Commerce\Models\Subscription;
 
 class SubscriptionPaused extends Notification implements ShouldQueue
 {

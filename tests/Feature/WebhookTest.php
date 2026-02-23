@@ -2,7 +2,6 @@
 
 use Core\Mod\Commerce\Controllers\Webhooks\BTCPayWebhookController;
 use Core\Mod\Commerce\Controllers\Webhooks\StripeWebhookController;
-use WebhookPayloadValidationException;
 use Core\Mod\Commerce\Models\Order;
 use Core\Mod\Commerce\Models\OrderItem;
 use Core\Mod\Commerce\Models\Payment;
@@ -21,6 +20,7 @@ use Core\Tenant\Models\Workspace;
 use Core\Tenant\Models\WorkspacePackage;
 use Core\Tenant\Services\EntitlementService;
 use Illuminate\Support\Facades\Notification;
+use WebhookPayloadValidationException;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
@@ -1396,7 +1396,7 @@ describe('Webhook Idempotency (Replay Attack Protection)', function () {
         });
 
         it('processes first webhook and rejects subsequent duplicates', function () {
-            $eventId = 'btc_event_first_' . uniqid();
+            $eventId = 'btc_event_first_'.uniqid();
 
             $mockGateway = Mockery::mock(BTCPayGateway::class);
             $mockGateway->shouldReceive('verifyWebhookSignature')->andReturn(true);

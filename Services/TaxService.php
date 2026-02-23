@@ -2,12 +2,12 @@
 
 namespace Core\Mod\Commerce\Services;
 
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Core\Mod\Commerce\Contracts\Orderable;
 use Core\Mod\Commerce\Models\TaxRate;
 use Core\Tenant\Models\Workspace;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Tax calculation service.

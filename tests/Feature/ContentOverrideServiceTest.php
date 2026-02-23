@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Core\Mod\Commerce\Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Core\Mod\Commerce\Models\ContentOverride;
 use Core\Mod\Commerce\Models\Entity;
 use Core\Mod\Commerce\Models\Product;
 use Core\Mod\Commerce\Services\ContentOverrideService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ContentOverrideServiceTest extends TestCase

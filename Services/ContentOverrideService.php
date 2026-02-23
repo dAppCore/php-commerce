@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Core\Mod\Commerce\Services;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Collection;
 use Core\Mod\Commerce\Models\ContentOverride;
 use Core\Mod\Commerce\Models\Entity;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 
 /**
  * Content Override Service - Sparse override resolution for white-label commerce.

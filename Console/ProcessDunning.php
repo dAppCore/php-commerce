@@ -2,10 +2,10 @@
 
 namespace Core\Mod\Commerce\Console;
 
-use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
 use Core\Mod\Commerce\Services\DunningService;
 use Core\Mod\Commerce\Services\SubscriptionService;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class ProcessDunning extends Command
 {

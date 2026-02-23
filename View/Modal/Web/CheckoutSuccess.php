@@ -2,6 +2,9 @@
 
 namespace Core\Mod\Commerce\View\Modal\Web;
 
+use Core\Mod\Commerce\Models\Order;
+use Core\Tenant\Models\User;
+use Core\Tenant\Models\Workspace;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -9,9 +12,6 @@ use Illuminate\Support\Facades\Hash;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
-use Core\Mod\Commerce\Models\Order;
-use Core\Tenant\Models\User;
-use Core\Tenant\Models\Workspace;
 
 #[Layout('shared::layouts.checkout')]
 class CheckoutSuccess extends Component

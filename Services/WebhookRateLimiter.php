@@ -206,7 +206,7 @@ class WebhookRateLimiter
             // Build a bitmask from the prefix length
             $maskBinary = str_repeat("\xff", (int) ($mask / 8));
             if ($mask % 8) {
-                $maskBinary .= chr(0xff << (8 - ($mask % 8)));
+                $maskBinary .= chr(0xFF << (8 - ($mask % 8)));
             }
             $maskBinary = str_pad($maskBinary, 16, "\x00");
 

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Core\Mod\Commerce\Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Core\Mod\Commerce\Models\ExchangeRate;
 use Core\Mod\Commerce\Services\CurrencyService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class CurrencyServiceTest extends TestCase

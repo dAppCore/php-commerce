@@ -2,14 +2,14 @@
 
 namespace Core\Mod\Commerce\Models;
 
+use Core\Mod\Commerce\Events\SubscriptionCreated;
+use Core\Mod\Commerce\Events\SubscriptionUpdated;
 use Core\Tenant\Models\Workspace;
 use Core\Tenant\Models\WorkspacePackage;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Core\Mod\Commerce\Events\SubscriptionCreated;
-use Core\Mod\Commerce\Events\SubscriptionUpdated;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 

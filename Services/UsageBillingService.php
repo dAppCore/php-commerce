@@ -3,11 +3,6 @@
 namespace Core\Mod\Commerce\Services;
 
 use Carbon\Carbon;
-use Core\Tenant\Models\User;
-use Core\Tenant\Models\Workspace;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Core\Mod\Commerce\Models\Invoice;
 use Core\Mod\Commerce\Models\InvoiceItem;
 use Core\Mod\Commerce\Models\Subscription;
@@ -15,6 +10,11 @@ use Core\Mod\Commerce\Models\SubscriptionUsage;
 use Core\Mod\Commerce\Models\UsageEvent;
 use Core\Mod\Commerce\Models\UsageMeter;
 use Core\Mod\Commerce\Services\PaymentGateway\StripeGateway;
+use Core\Tenant\Models\User;
+use Core\Tenant\Models\Workspace;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Usage-based billing service.

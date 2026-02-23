@@ -1,7 +1,6 @@
 <?php
 
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Cache;
 use Core\Mod\Commerce\Exceptions\PauseLimitExceededException;
 use Core\Mod\Commerce\Models\Subscription;
 use Core\Mod\Commerce\Services\ProrationResult;
@@ -11,6 +10,7 @@ use Core\Tenant\Models\Package;
 use Core\Tenant\Models\User;
 use Core\Tenant\Models\Workspace;
 use Core\Tenant\Models\WorkspacePackage;
+use Illuminate\Support\Facades\Cache;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 

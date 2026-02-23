@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Core\Mod\Commerce\View\Modal\Admin;
 
+use Core\Mod\Commerce\Models\CreditNote;
+use Core\Mod\Commerce\Services\CreditNoteService;
 use Core\Tenant\Models\User;
 use Core\Tenant\Models\Workspace;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Core\Mod\Commerce\Models\CreditNote;
-use Core\Mod\Commerce\Services\CreditNoteService;
 
 #[Title('Credit Notes')]
 class CreditNoteManager extends Component

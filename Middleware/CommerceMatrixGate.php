@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Core\Mod\Commerce\Middleware;
 
+use Closure;
 use Core\Mod\Commerce\Models\Entity;
 use Core\Mod\Commerce\Services\PermissionMatrixService;
-use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;

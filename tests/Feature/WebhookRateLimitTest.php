@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
+use Core\Mod\Commerce\Services\WebhookRateLimiter;
 use Illuminate\Cache\RateLimiter;
 use Illuminate\Http\Request;
-use Core\Mod\Commerce\Services\WebhookRateLimiter;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 

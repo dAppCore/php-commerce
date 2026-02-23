@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Core\Mod\Commerce\Listeners;
 
 use Core\Mod\Commerce\Events\SubscriptionCreated;
-use Mod\Trees\Models\TreePlanting;
 use Core\Tenant\Models\AgentReferralBonus;
 use Illuminate\Support\Facades\Log;
+use Mod\Trees\Models\TreePlanting;
 
 /**
  * Rewards agents when their referred user subscribes.

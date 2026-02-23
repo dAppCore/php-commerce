@@ -2,9 +2,9 @@
 
 namespace Core\Mod\Commerce\Console;
 
+use Core\Mod\Commerce\Models\Order;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
-use Core\Mod\Commerce\Models\Order;
 
 class CleanupExpiredOrders extends Command
 {

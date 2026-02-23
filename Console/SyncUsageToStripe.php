@@ -2,10 +2,10 @@
 
 namespace Core\Mod\Commerce\Console;
 
-use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
 use Core\Mod\Commerce\Models\Subscription;
 use Core\Mod\Commerce\Services\UsageBillingService;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Sync usage records to Stripe metered billing.

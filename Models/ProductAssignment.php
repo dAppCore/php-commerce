@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Core\Mod\Commerce\Models;
 
+use Core\Mod\Commerce\Concerns\HasContentOverrides;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Core\Mod\Commerce\Concerns\HasContentOverrides;
 
 /**
  * Product Assignment - Links products to M2/M3 entities.

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Core\Mod\Commerce\Concerns;
 
-use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Core\Mod\Commerce\Models\ContentOverride;
 use Core\Mod\Commerce\Models\Entity;
 use Core\Mod\Commerce\Services\ContentOverrideService;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
  * Trait for models that can have content overrides.

@@ -2,10 +2,10 @@
 
 namespace Core\Mod\Commerce\Models;
 
+use Core\Mod\Commerce\Contracts\Orderable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Core\Mod\Commerce\Contracts\Orderable;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 

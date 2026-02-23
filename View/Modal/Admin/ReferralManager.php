@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Core\Mod\Commerce\View\Modal\Admin;
 
-use Livewire\Attributes\Computed;
-use Livewire\Attributes\Layout;
-use Livewire\Attributes\Title;
-use Livewire\Component;
-use Livewire\WithPagination;
 use Core\Mod\Commerce\Models\Referral;
 use Core\Mod\Commerce\Models\ReferralCode;
 use Core\Mod\Commerce\Models\ReferralCommission;
 use Core\Mod\Commerce\Models\ReferralPayout;
 use Core\Mod\Commerce\Services\ReferralService;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 /**
  * Admin dashboard for managing referrals, commissions, and payouts.
