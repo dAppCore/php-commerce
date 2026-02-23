@@ -36,6 +36,10 @@ jobs:
             ../php-framework
           ls -la ../php-framework/composer.json
 
+      - name: Configure path repositories
+        run: |
+          composer config repositories.core path ../php-framework --no-interaction
+
       - name: Install dependencies
         run: composer install --prefer-dist --no-interaction --no-progress
 
