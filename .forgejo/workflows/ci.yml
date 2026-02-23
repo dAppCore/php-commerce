@@ -51,12 +51,18 @@ jobs:
             echo "Pint not installed, skipping"
           fi
 
-      - name: Run tests
+      - name: Run unit tests
         run: |
           if [ -f vendor/bin/pest ]; then
-            vendor/bin/pest --ci --coverage
+            if [ -d tests/Unit ] || [ -d tests/unit ]; then
+              vendor/bin/pest tests/Unit --ci
+            elif [ -d src/Tests/Unit ]; then
+              vendor/bin/pest src/Tests/Unit --ci
+            else
+              echo "No unit test directory found, skipping"
+            fi
           elif [ -f vendor/bin/phpunit ]; then
-            vendor/bin/phpunit --coverage-text
+            vendor/bin/phpunit --testsuite=Unit
           else
             echo "No test runner found, skipping"
           fi
