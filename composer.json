@@ -1,51 +1,59 @@
 {
-  "name": "host-uk/core-commerce",
-  "description": "Commerce, subscriptions and payments for Laravel",
-  "keywords": [
-    "laravel",
-    "commerce",
-    "stripe",
-    "subscriptions",
-    "payments"
-  ],
-  "license": "EUPL-1.2",
-  "require": {
-    "php": "^8.2",
-    "host-uk/core": "dev-main"
-  },
-  "require-dev": {
-    "laravel/pint": "^1.18",
-    "orchestra/testbench": "^9.0|^10.0",
-    "pestphp/pest": "^3.0"
-  },
-  "autoload": {
-    "psr-4": {
-      "Core\\Mod\\Commerce\\": "",
-      "Core\\Service\\Commerce\\": "Service/"
-    }
-  },
-  "autoload-dev": {
-    "psr-4": {
-      "Core\\Mod\\Commerce\\Tests\\": "Tests/"
-    }
-  },
-  "extra": {
-    "laravel": {
-      "providers": [
-        "Core\\Mod\\Commerce\\Boot"
-      ]
-    }
-  },
-  "scripts": {
-    "lint": "pint",
-    "test": "pest"
-  },
-  "config": {
-    "sort-packages": true,
-    "allow-plugins": {
-      "pestphp/pest-plugin": true
-    }
-  },
-  "minimum-stability": "dev",
-  "prefer-stable": true
+    "name": "host-uk/core-commerce",
+    "description": "Commerce, subscriptions and payments for Laravel",
+    "keywords": [
+        "laravel",
+        "commerce",
+        "stripe",
+        "subscriptions",
+        "payments"
+    ],
+    "license": "EUPL-1.2",
+    "require": {
+        "php": "^8.2",
+        "host-uk/core": "dev-main"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.18",
+        "orchestra/testbench": "^9.0|^10.0",
+        "pestphp/pest": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Core\\Mod\\Commerce\\": "",
+            "Core\\Service\\Commerce\\": "Service/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Core\\Mod\\Commerce\\Tests\\": "Tests/",
+            "Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Core\\Mod\\Commerce\\Boot"
+            ]
+        }
+    },
+    "scripts": {
+        "lint": "pint",
+        "test": "pest"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "repositories": [
+        {
+            "name": "core",
+            "type": "path",
+            "url": "../php-framework"
+        }
+    ]
 }
