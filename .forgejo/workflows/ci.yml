@@ -11,7 +11,7 @@ jobs:
     name: PHP ${{ matrix.php }}
     runs-on: ubuntu-latest
     container:
-      image: lthn/build:php-\${{ matrix.php }}
+      image: lthn/build:php-${{ matrix.php }}
 
     strategy:
       fail-fast: true
