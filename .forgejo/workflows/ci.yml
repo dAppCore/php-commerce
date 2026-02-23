@@ -26,26 +26,15 @@ jobs:
           extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite
           coverage: pcov
 
-      - name: Checkout path dependencies
+      - name: Clone sister packages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
         run: |
-          php -r '
-            $d = json_decode(file_get_contents("composer.json"), true);
-            foreach ($d["repositories"] ?? [] as $r) {
-              if (($r["type"] ?? "") === "path") echo $r["url"] . "\n";
-            }
-          ' | while IFS= read -r path; do
-            [ -z "$path" ] && continue
-            dir_name=$(basename "$path")
-            if [ ! -d "$path" ]; then
-              echo "Cloning $dir_name into $path"
-              git clone --depth 1 \
-                "https://x-access-token:${GITHUB_TOKEN}@forge.lthn.ai/core/${dir_name}.git" \
-                "$path" || echo "Warning: Failed to clone $dir_name"
-            fi
-          done
+          echo "Cloning php-framework into ../php-framework"
+          git clone --depth 1 \
+            "https://x-access-token:${GITHUB_TOKEN}@forge.lthn.ai/core/php-framework.git" \
+            ../php-framework
+          ls -la ../php-framework/composer.json
 
       - name: Install dependencies
         run: composer install --prefer-dist --no-interaction --no-progress
