@@ -1,0 +1,42 @@
+name: Publish Composer Package
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: docker
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Create package archive
+        run: |
+          zip -r package.zip . \
+            -x ".forgejo/*" \
+            -x ".git/*" \
+            -x "tests/*" \
+            -x "docker/*" \
+            -x "*.yaml" \
+            -x "infection.json5" \
+            -x "phpstan.neon" \
+            -x "phpunit.xml" \
+            -x "psalm.xml" \
+            -x "rector.php" \
+            -x "TODO.md" \
+            -x "ROADMAP.md" \
+            -x "CONTRIBUTING.md" \
+            -x "package.json" \
+            -x "package-lock.json"
+
+      - name: Publish to Forgejo Composer registry
+        run: |
+          curl --fail --user "${{ secrets.REGISTRY_USER }}:${{ secrets.REGISTRY_TOKEN }}" \
+            --upload-file package.zip \
+            "${{ github.server_url }}/api/packages/core/composer?version=${{ steps.version.outputs.VERSION }}"
