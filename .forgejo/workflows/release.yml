@@ -7,14 +7,9 @@ on:
 
 jobs:
   publish:
-    runs-on: docker
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Extract version from tag
-        id: version
-        run: echo "VERSION=${GITEA_REF_NAME#v}" >> "$GITEA_OUTPUT"
+      - uses: actions/checkout@v4
 
       - name: Create package archive
         run: |
@@ -39,4 +34,4 @@ jobs:
         run: |
           curl --fail --user "${{ secrets.REGISTRY_USER }}:${{ secrets.REGISTRY_TOKEN }}" \
             --upload-file package.zip \
-            "https://forge.lthn.ai/api/packages/core/composer?version=${{ steps.version.outputs.VERSION }}"
+            "https://forge.lthn.ai/api/packages/core/composer?version=${FORGEJO_REF_NAME#v}"
