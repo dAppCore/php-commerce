@@ -13,6 +13,7 @@ jobs:
 
       - name: Create package archive
         run: |
+          apt-get update && apt-get install -y zip
           zip -r package.zip . \
             -x ".forgejo/*" \
             -x ".git/*" \
