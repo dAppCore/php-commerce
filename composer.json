@@ -1,5 +1,5 @@
 {
-    "name": "core/php-commerce",
+    "name": "lthn/php-commerce",
     "description": "Commerce, subscriptions and payments for Laravel",
     "keywords": [
         "laravel",
@@ -11,7 +11,7 @@
     "license": "EUPL-1.2",
     "require": {
         "php": "^8.2",
-        "core/php": "*"
+        "lthn/php": "*"
     },
     "require-dev": {
         "laravel/pint": "^1.18",
@@ -55,5 +55,8 @@
             "type": "path",
             "url": "../php"
         }
-    ]
+    ],
+    "replace": {
+        "core/php-commerce": "self.version"
+    }
 }
