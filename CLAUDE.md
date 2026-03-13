@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-`host-uk/core-commerce` - A Laravel package providing orders, subscriptions, invoices, and payment processing. Namespace: `Core\Mod\Commerce`.
+`lthn/php-commerce` — A Laravel package providing orders, subscriptions, invoices, and payment processing. This is a **package** (not a standalone app), tested with Orchestra Testbench.
 
 ## Commands
 
@@ -13,13 +13,21 @@ composer run lint          # vendor/bin/pint
 composer run test          # vendor/bin/pest
 vendor/bin/pint --dirty    # Format changed files only
 vendor/bin/pest --filter=CheckoutFlowTest  # Run single test file
+vendor/bin/pest --filter="checkout"         # Run tests matching name
 ```
 
 ## Architecture
 
+### Dual Namespace System
+
+The package has two PSR-4 roots, serving different purposes:
+
+- `Core\Mod\Commerce\` (root `./`) — The module: models, services, events, Livewire components, routes. `Boot.php` extends `ServiceProvider` with event-driven lazy-loading via `$listens`.
+- `Core\Service\Commerce\` (root `./Service/`) — The service definition layer: implements `ServiceDefinition` for the platform's service registry (admin menus, entitlements, versioning).
+
 ### Boot & Event System
 
-This is a **Laravel package** (not a standalone app). `Boot.php` extends `ServiceProvider` and uses the Core Framework's event-driven lazy-loading:
+`Boot.php` uses the Core Framework's event-driven lazy-loading — handlers only fire when the relevant subsystem initialises:
 
 ```php
 public static array $listens = [
@@ -30,83 +38,83 @@ public static array $listens = [
 ];
 ```
 
-### Service Layer
-
-Business logic lives in `Services/`. All services are registered as singletons in `Boot::register()`:
-
-- **CommerceService** - Order orchestration
-- **SubscriptionService** - Subscription lifecycle
-- **InvoiceService** - Invoice generation
-- **TaxService** - Jurisdiction-based tax calculation
-- **CouponService** - Discount validation and application
-- **CurrencyService** - Multi-currency support with exchange rates
-- **DunningService** - Failed payment retry logic
-- **UsageBillingService** - Metered/usage-based billing
-- **ReferralService** - Affiliate tracking and commissions
-- **PaymentMethodService** - Stored payment methods
+Livewire components are registered inside `onAdminPanel()` and `onWebRoutes()`, not auto-discovered. All components use the `commerce.admin.*` or `commerce.web.*` naming prefix.
 
 ### Payment Gateways
 
-Pluggable via `PaymentGatewayContract`:
-- `StripeGateway` - Primary (SaaS)
-- `BTCPayGateway` - Cryptocurrency
+Pluggable via `PaymentGatewayContract` in `Services/PaymentGateway/`:
+- `BTCPayGateway` — Cryptocurrency (default when enabled)
+- `StripeGateway` — Card payments (SaaS)
+
+The default gateway is resolved by checking `config('commerce.gateways.btcpay.enabled')` — BTCPay takes priority when enabled.
+
+### Multi-Entity Hierarchy (Commerce Matrix)
+
+The system supports a three-tier entity model configured in `config.php` under `matrix` and `entities`:
+- **M1 (Master Company)** — Owns the product catalogue, source of truth
+- **M2 (Facade/Storefront)** — Selects from M1 catalogue, can override content
+- **M3 (Dropshipper)** — Full catalogue inheritance, no management responsibility
+
+`PermissionMatrixService` controls cross-entity access. It has a "training mode" (prompts for undefined permissions) and "strict mode" (undefined = denied).
+
+### SKU System
+
+SKUs encode entity lineage: `{m1_code}-{m2_code}-{master_sku}`. `SkuParserService` decodes them; `SkuBuilderService` constructs them; `SkuLineageService` tracks provenance.
 
 ### Domain Events
 
 Events in `Events/` trigger listeners for loose coupling:
-- `OrderPaid` - Payment succeeded
-- `SubscriptionCreated`, `SubscriptionRenewed`, `SubscriptionUpdated`, `SubscriptionCancelled`
+- `OrderPaid` → `CreateReferralCommission`
+- `SubscriptionCreated` → `RewardAgentReferralOnSubscription`
+- `SubscriptionRenewed` → `ResetUsageOnRenewal`
+- `SubscriptionCancelled`, `SubscriptionUpdated`
+
+`ProvisionSocialHostSubscription` is a subscriber (listens to multiple events).
 
 ### Livewire Components
 
 Located in `View/Modal/` (not `Livewire/`):
-- `View/Modal/Web/` - User-facing (checkout, invoices, subscription management)
-- `View/Modal/Admin/` - Admin panel (managers for orders, coupons, products, etc.)
+- `View/Modal/Web/` — User-facing (checkout, invoices, subscription management)
+- `View/Modal/Admin/` — Admin panel (managers for orders, coupons, products, etc.)
+
+### Scheduled Commands
+
+`Console/` has artisan commands registered in `onConsole()`: dunning processing, renewal reminders, exchange rate refresh, usage sync to Stripe, referral commission maturation, expired order cleanup, and tree planting for subscribers.
 
 ## Key Directories
 
 ```
-Boot.php              # ServiceProvider, event registration
-config.php            # Currencies, gateways, tax rules
-Models/               # Eloquent models (Order, Subscription, Invoice, etc.)
-Services/             # Business logic layer
-View/Modal/           # Livewire components
+Boot.php              # ServiceProvider, event registration, singleton bindings
+config.php            # Currencies, gateways, tax, dunning, fraud, matrix settings
+Service/Boot.php      # ServiceDefinition for platform registry (admin menus, entitlements)
+Models/               # Eloquent models
+Services/             # Business logic (singletons registered in Boot::register())
+Services/PaymentGateway/  # Gateway contract + implementations
+Contracts/            # Interfaces (e.g., Orderable)
+Events/               # Domain events
+Listeners/            # Event handlers
+View/Modal/           # Livewire components (Admin/ and Web/)
 Routes/               # web.php, api.php, admin.php, console.php
 Migrations/           # Database schema
-Events/               # Domain events
-Listeners/            # Event subscribers
-tests/Feature/        # Pest feature tests
+Console/              # Artisan commands
+tests/                # Pest tests using Orchestra Testbench
 ```
 
 ## Conventions
 
-- **UK English** - colour, organisation, centre
+- **UK English** — colour, organisation, centre, behaviour
 - **PSR-12** via Laravel Pint
 - **Pest** for testing (not PHPUnit syntax)
-- **Strict types** - `declare(strict_types=1);` in all files
-- **Livewire + Flux Pro** for UI components
+- **Strict types** — `declare(strict_types=1);` in all files
+- **Final classes** by default unless inheritance is intended
+- **Type hints** on all parameters and return types
+- **Livewire + Flux Pro** for UI components (not vanilla Alpine)
 - **Font Awesome Pro** for icons (not Heroicons)
+- **Naming** — Models: singular PascalCase; Tables: plural snake_case; Livewire: `{Feature}Page`, `{Feature}Modal`
 
-## Namespaces
+## Don't
 
-```php
-use Core\Mod\Commerce\Models\Order;
-use Core\Mod\Commerce\Services\SubscriptionService;
-use Core\Service\Commerce\SomeUtility;  // Alternative service namespace
-```
-
-## Testing
-
-Tests are in `tests/` with Pest:
-
-```php
-test('user can checkout', function () {
-    // ...
-});
-```
-
-Run a specific test:
-```bash
-vendor/bin/pest --filter="checkout"
-vendor/bin/pest tests/Feature/CheckoutFlowTest.php
-```
+- Don't use Heroicons (use Font Awesome Pro)
+- Don't use vanilla Alpine components (use Flux Pro)
+- Don't create controllers for Livewire pages
+- Don't use American English spellings
