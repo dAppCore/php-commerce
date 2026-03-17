@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Core\Mod\Commerce\Console;
 
+use Carbon\Carbon;
 use Core\Mod\Commerce\Models\Subscription;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -164,7 +165,7 @@ class PlantSubscriberTrees extends Command
     protected function hasPlantedThisMonth(int $workspaceId, string $month): bool
     {
         // Parse the month string (YYYY-MM format)
-        $date = \Carbon\Carbon::createFromFormat('Y-m', $month);
+        $date = Carbon::createFromFormat('Y-m', $month);
         $startOfMonth = $date->copy()->startOfMonth();
         $endOfMonth = $date->copy()->endOfMonth();
 

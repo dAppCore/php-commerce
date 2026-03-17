@@ -7,6 +7,7 @@ namespace Core\Mod\Commerce\Services;
 use Core\Mod\Commerce\Models\Order;
 use Core\Mod\Commerce\Models\Subscription;
 use Core\Mod\Commerce\Models\WebhookEvent;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -311,7 +312,7 @@ class WebhookLogger
     /**
      * Get recent failed events for debugging.
      */
-    public function getRecentFailures(string $gateway, int $limit = 10): \Illuminate\Database\Eloquent\Collection
+    public function getRecentFailures(string $gateway, int $limit = 10): Collection
     {
         return WebhookEvent::forGateway($gateway)
             ->failed()

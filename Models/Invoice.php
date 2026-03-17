@@ -1,7 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\Models;
 
+use Carbon\Carbon;
+use Core\Mod\Commerce\Database\Factories\InvoiceFactory;
 use Core\Tenant\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -23,9 +27,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property float $total
  * @property float $amount_paid
  * @property float $amount_due
- * @property \Carbon\Carbon $issue_date
- * @property \Carbon\Carbon $due_date
- * @property \Carbon\Carbon|null $paid_at
+ * @property Carbon $issue_date
+ * @property Carbon $due_date
+ * @property Carbon|null $paid_at
  * @property string|null $billing_name
  * @property array|null $billing_address
  * @property string|null $tax_id
@@ -35,9 +39,9 @@ class Invoice extends Model
 {
     use HasFactory;
 
-    protected static function newFactory(): \Core\Mod\Commerce\Database\Factories\InvoiceFactory
+    protected static function newFactory(): InvoiceFactory
     {
-        return \Core\Mod\Commerce\Database\Factories\InvoiceFactory::new();
+        return InvoiceFactory::new();
     }
 
     protected $fillable = [
@@ -93,7 +97,7 @@ class Invoice extends Model
     /**
      * Get the issued_at attribute (alias for issue_date).
      */
-    public function getIssuedAtAttribute(): ?\Carbon\Carbon
+    public function getIssuedAtAttribute(): ?Carbon
     {
         return $this->issue_date;
     }

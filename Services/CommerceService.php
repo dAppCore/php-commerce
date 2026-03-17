@@ -6,6 +6,7 @@ namespace Core\Mod\Commerce\Services;
 
 use Core\Mod\Commerce\Contracts\Orderable;
 use Core\Mod\Commerce\Data\FraudAssessment;
+use Core\Mod\Commerce\Events\OrderPaid;
 use Core\Mod\Commerce\Exceptions\CheckoutRateLimitException;
 use Core\Mod\Commerce\Exceptions\FraudBlockedException;
 use Core\Mod\Commerce\Models\Coupon;
@@ -13,9 +14,12 @@ use Core\Mod\Commerce\Models\Invoice;
 use Core\Mod\Commerce\Models\Order;
 use Core\Mod\Commerce\Models\OrderItem;
 use Core\Mod\Commerce\Models\Payment;
+use Core\Mod\Commerce\Models\Refund;
 use Core\Mod\Commerce\Models\Subscription;
 use Core\Mod\Commerce\Services\PaymentGateway\PaymentGatewayContract;
+use Core\Tenant\Models\Boost;
 use Core\Tenant\Models\Package;
+use Core\Tenant\Models\User;
 use Core\Tenant\Models\Workspace;
 use Core\Tenant\Services\EntitlementService;
 use Illuminate\Database\Eloquent\Model;
@@ -123,7 +127,7 @@ class CommerceService
             $order = Order::create([
                 'orderable_type' => get_class($orderable),
                 'orderable_id' => $orderable->id,
-                'user_id' => $orderable instanceof \Core\Tenant\Models\User ? $orderable->id : null,
+                'user_id' => $orderable instanceof User ? $orderable->id : null,
                 'order_number' => Order::generateOrderNumber(),
                 'status' => 'pending',
                 'billing_cycle' => $billingCycle,
@@ -361,7 +365,7 @@ class CommerceService
             $order = Order::create([
                 'orderable_type' => get_class($orderable),
                 'orderable_id' => $orderable->id,
-                'user_id' => $orderable instanceof \Core\Tenant\Models\User ? $orderable->id : null,
+                'user_id' => $orderable instanceof User ? $orderable->id : null,
                 'order_number' => Order::generateOrderNumber(),
                 'status' => 'pending',
                 'billing_cycle' => 'onetime',
@@ -437,7 +441,7 @@ class CommerceService
             }
 
             // Provision boosts for user-level orders
-            if ($order->orderable instanceof \Core\Tenant\Models\User) {
+            if ($order->orderable instanceof User) {
                 foreach ($order->items as $item) {
                     if ($item->item_type === 'boost') {
                         $quantity = $item->metadata['quantity'] ?? $item->quantity ?? 1;
@@ -450,28 +454,28 @@ class CommerceService
             }
 
             // Dispatch OrderPaid event for referral tracking and other listeners
-            event(new \Core\Mod\Commerce\Events\OrderPaid($order, $payment));
+            event(new OrderPaid($order, $payment));
         });
     }
 
     /**
      * Provision a boost for a user.
      */
-    public function provisionBoostForUser(\Core\Tenant\Models\User $user, string $featureCode, int $quantity = 1, array $metadata = []): \Core\Tenant\Models\Boost
+    public function provisionBoostForUser(User $user, string $featureCode, int $quantity = 1, array $metadata = []): Boost
     {
         // Use ADD_LIMIT for quantity-based boosts, ENABLE for boolean boosts
         $boostType = $quantity > 1 || $this->isQuantityBasedFeature($featureCode)
-            ? \Core\Tenant\Models\Boost::BOOST_TYPE_ADD_LIMIT
-            : \Core\Tenant\Models\Boost::BOOST_TYPE_ENABLE;
+            ? Boost::BOOST_TYPE_ADD_LIMIT
+            : Boost::BOOST_TYPE_ENABLE;
 
-        return \Core\Tenant\Models\Boost::create([
+        return Boost::create([
             'user_id' => $user->id,
             'workspace_id' => null,
             'feature_code' => $featureCode,
             'boost_type' => $boostType,
-            'duration_type' => \Core\Tenant\Models\Boost::DURATION_PERMANENT,
-            'limit_value' => $boostType === \Core\Tenant\Models\Boost::BOOST_TYPE_ADD_LIMIT ? $quantity : null,
-            'status' => \Core\Tenant\Models\Boost::STATUS_ACTIVE,
+            'duration_type' => Boost::DURATION_PERMANENT,
+            'limit_value' => $boostType === Boost::BOOST_TYPE_ADD_LIMIT ? $quantity : null,
+            'status' => Boost::STATUS_ACTIVE,
             'starts_at' => now(),
             'metadata' => $metadata,
         ]);
@@ -599,7 +603,7 @@ class CommerceService
         Payment $payment,
         ?float $amount = null,
         ?string $reason = null
-    ): \Core\Mod\Commerce\Models\Refund {
+    ): Refund {
         $amountCents = $amount
             ? (int) ($amount * 100)
             : (int) (($payment->amount - $payment->amount_refunded) * 100);
@@ -660,7 +664,7 @@ class CommerceService
             // For BTCPay, payment will be 'pending' as it requires customer action
             // This is expected - automatic retry won't work for crypto payments
             if ($payment->status === 'pending' && $paymentMethod->gateway === 'btcpay') {
-                \Illuminate\Support\Facades\Log::info('BTCPay invoice created for retry - requires customer payment', [
+                Log::info('BTCPay invoice created for retry - requires customer payment', [
                     'invoice_id' => $invoice->id,
                     'payment_id' => $payment->id,
                 ]);
@@ -668,7 +672,7 @@ class CommerceService
 
             return false;
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Invoice payment retry failed', [
+            Log::error('Invoice payment retry failed', [
                 'invoice_id' => $invoice->id,
                 'error' => $e->getMessage(),
             ]);

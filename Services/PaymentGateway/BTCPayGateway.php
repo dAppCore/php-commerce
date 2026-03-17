@@ -10,6 +10,7 @@ use Core\Mod\Commerce\Models\Payment;
 use Core\Mod\Commerce\Models\PaymentMethod;
 use Core\Mod\Commerce\Models\Subscription;
 use Core\Tenant\Models\Workspace;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -633,7 +634,7 @@ class BTCPayGateway implements PaymentGatewayContract
     /**
      * Extract a safe error message from a failed response.
      */
-    protected function sanitiseErrorMessage(\Illuminate\Http\Client\Response $response): string
+    protected function sanitiseErrorMessage(Response $response): string
     {
         $json = $response->json();
 

@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\Services;
 
+use Carbon\Carbon;
 use Core\Mod\Commerce\Models\PaymentMethod;
 use Core\Mod\Commerce\Services\PaymentGateway\StripeGateway;
 use Core\Tenant\Models\User;
@@ -253,7 +256,7 @@ class PaymentMethodService
             return false;
         }
 
-        $expiry = \Carbon\Carbon::createFromDate(
+        $expiry = Carbon::createFromDate(
             $paymentMethod->exp_year,
             $paymentMethod->exp_month
         )->endOfMonth();

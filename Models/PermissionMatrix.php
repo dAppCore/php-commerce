@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Core\Mod\Commerce\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -23,7 +24,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property bool $locked
  * @property string $source
  * @property int|null $set_by_entity_id
- * @property \Carbon\Carbon|null $trained_at
+ * @property Carbon|null $trained_at
  * @property string|null $trained_route
  */
 class PermissionMatrix extends Model

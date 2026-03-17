@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Core\Mod\Commerce\View\Modal\Admin;
 
+use Carbon\Carbon;
 use Core\Mod\Commerce\Models\Referral;
 use Core\Mod\Commerce\Models\ReferralCode;
 use Core\Mod\Commerce\Models\ReferralCommission;
@@ -309,8 +310,8 @@ class ReferralManager extends Component
             'commission_rate' => $this->codeCommissionRate,
             'cookie_days' => $this->codeCookieDays,
             'max_uses' => $this->codeMaxUses,
-            'valid_from' => $this->codeValidFrom ? \Carbon\Carbon::parse($this->codeValidFrom) : null,
-            'valid_until' => $this->codeValidUntil ? \Carbon\Carbon::parse($this->codeValidUntil) : null,
+            'valid_from' => $this->codeValidFrom ? Carbon::parse($this->codeValidFrom) : null,
+            'valid_until' => $this->codeValidUntil ? Carbon::parse($this->codeValidUntil) : null,
             'is_active' => $this->codeIsActive,
             'campaign_name' => $this->codeCampaignName,
         ];

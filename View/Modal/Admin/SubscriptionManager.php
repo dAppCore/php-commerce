@@ -7,6 +7,7 @@ namespace Core\Mod\Commerce\View\Modal\Admin;
 use Core\Mod\Commerce\Models\Subscription;
 use Core\Mod\Commerce\Services\SubscriptionService;
 use Core\Tenant\Models\Workspace;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -150,7 +151,7 @@ class SubscriptionManager extends Component
         $count = Subscription::whereIn('id', $this->selected)
             ->whereNotNull('current_period_end')
             ->update([
-                'current_period_end' => \Illuminate\Support\Facades\DB::raw('DATE_ADD(current_period_end, INTERVAL 30 DAY)'),
+                'current_period_end' => DB::raw('DATE_ADD(current_period_end, INTERVAL 30 DAY)'),
             ]);
 
         session()->flash('message', __('commerce::commerce.bulk.period_extended', ['count' => $count, 'days' => 30]));

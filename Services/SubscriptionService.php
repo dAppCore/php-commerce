@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\Services;
 
 use Carbon\Carbon;
@@ -9,6 +11,7 @@ use Core\Tenant\Models\Package;
 use Core\Tenant\Models\Workspace;
 use Core\Tenant\Models\WorkspacePackage;
 use Core\Tenant\Services\EntitlementService;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -414,7 +417,7 @@ class SubscriptionService
     /**
      * Get subscriptions expiring soon (for renewal reminders).
      */
-    public function getExpiringSoon(int $days = 7): \Illuminate\Database\Eloquent\Collection
+    public function getExpiringSoon(int $days = 7): Collection
     {
         return Subscription::query()
             ->active()
@@ -428,7 +431,7 @@ class SubscriptionService
     /**
      * Get subscriptions that have failed payment and need dunning.
      */
-    public function getFailedPayments(): \Illuminate\Database\Eloquent\Collection
+    public function getFailedPayments(): Collection
     {
         return Subscription::query()
             ->where('status', 'past_due')
