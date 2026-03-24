@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -17,8 +20,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $type
  * @property float $rate
  * @property bool $is_digital_services
- * @property \Carbon\Carbon $effective_from
- * @property \Carbon\Carbon|null $effective_until
+ * @property Carbon $effective_from
+ * @property Carbon|null $effective_until
  * @property bool $is_active
  * @property string|null $stripe_tax_rate_id
  */

@@ -12,7 +12,9 @@ use Core\Mod\Commerce\Services\CommerceService;
 use Core\Mod\Commerce\Services\InvoiceService;
 use Core\Mod\Commerce\Services\SubscriptionService;
 use Core\Tenant\Models\Package;
+use Core\Tenant\Models\User;
 use Core\Tenant\Models\Workspace;
+use Core\Tenant\Services\EntitlementService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -38,7 +40,7 @@ class CommerceController extends Controller
     {
         $user = Auth::user();
 
-        if (! $user instanceof \Core\Tenant\Models\User) {
+        if (! $user instanceof User) {
             return null;
         }
 
@@ -200,7 +202,7 @@ class CommerceController extends Controller
             return response()->json(['error' => 'No workspace found'], 404);
         }
 
-        $entitlements = app(\Core\Tenant\Services\EntitlementService::class);
+        $entitlements = app(EntitlementService::class);
         $summary = $entitlements->getUsageSummary($workspace);
 
         return response()->json([

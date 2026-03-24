@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\Models;
 
+use Core\Mod\Commerce\Database\Factories\PaymentFactory;
 use Core\Tenant\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -33,9 +36,9 @@ class Payment extends Model
 {
     use HasFactory;
 
-    protected static function newFactory(): \Core\Mod\Commerce\Database\Factories\PaymentFactory
+    protected static function newFactory(): PaymentFactory
     {
-        return \Core\Mod\Commerce\Database\Factories\PaymentFactory::new();
+        return PaymentFactory::new();
     }
 
     protected $fillable = [

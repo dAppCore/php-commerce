@@ -1,15 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 use Core\Mod\Commerce\Models\Payment;
 use Core\Mod\Commerce\Models\Refund;
 use Core\Mod\Commerce\Notifications\RefundProcessed;
 use Core\Mod\Commerce\Services\CommerceService;
+use Core\Mod\Commerce\Services\PaymentGateway\PaymentGatewayContract;
 use Core\Mod\Commerce\Services\RefundService;
 use Core\Tenant\Models\User;
 use Core\Tenant\Models\Workspace;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
 beforeEach(function () {
     Notification::fake();
@@ -36,7 +40,7 @@ beforeEach(function () {
     ]);
 
     // Mock the gateway
-    $mockGateway = Mockery::mock(\Core\Mod\Commerce\Services\PaymentGateway\PaymentGatewayContract::class);
+    $mockGateway = Mockery::mock(PaymentGatewayContract::class);
     $mockGateway->shouldReceive('refund')->andReturn([
         'success' => true,
         'refund_id' => 're_test_123',
@@ -92,15 +96,15 @@ describe('RefundService', function () {
 
         it('throws exception for refund exceeding available amount', function () {
             expect(fn () => $this->service->refund($this->payment, 150.00))
-                ->toThrow(\InvalidArgumentException::class, 'exceeds maximum refundable');
+                ->toThrow(InvalidArgumentException::class, 'exceeds maximum refundable');
         });
 
         it('throws exception for zero or negative amount', function () {
             expect(fn () => $this->service->refund($this->payment, 0))
-                ->toThrow(\InvalidArgumentException::class, 'greater than zero');
+                ->toThrow(InvalidArgumentException::class, 'greater than zero');
 
             expect(fn () => $this->service->refund($this->payment, -50.00))
-                ->toThrow(\InvalidArgumentException::class, 'greater than zero');
+                ->toThrow(InvalidArgumentException::class, 'greater than zero');
         });
 
         it('throws exception for non-succeeded payments', function () {
@@ -114,7 +118,7 @@ describe('RefundService', function () {
             ]);
 
             expect(fn () => $this->service->refund($pendingPayment, 50.00))
-                ->toThrow(\InvalidArgumentException::class, 'only refund successful payments');
+                ->toThrow(InvalidArgumentException::class, 'only refund successful payments');
         });
 
         it('allows multiple partial refunds up to full amount', function () {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Core\Mod\Commerce\Models;
 
+use Carbon\Carbon;
 use Core\Tenant\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -24,7 +25,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $notes
  * @property int|null $user_id
  * @property int|null $unit_cost
- * @property \Carbon\Carbon $created_at
+ * @property Carbon $created_at
  */
 class InventoryMovement extends Model
 {

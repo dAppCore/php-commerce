@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\Console;
 
 use Core\Mod\Commerce\Models\Subscription;

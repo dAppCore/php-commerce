@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\Events;
 
 use Core\Mod\Commerce\Models\Subscription;

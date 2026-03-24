@@ -1,7 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\Models;
 
+use Carbon\Carbon;
+use Core\Mod\Commerce\Database\Factories\SubscriptionFactory;
 use Core\Mod\Commerce\Events\SubscriptionCreated;
 use Core\Mod\Commerce\Events\SubscriptionUpdated;
 use Core\Tenant\Models\Workspace;
@@ -26,12 +30,12 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property string $gateway_customer_id
  * @property string|null $gateway_price_id
  * @property string $status
- * @property \Carbon\Carbon $current_period_start
- * @property \Carbon\Carbon $current_period_end
- * @property \Carbon\Carbon|null $trial_ends_at
+ * @property Carbon $current_period_start
+ * @property Carbon $current_period_end
+ * @property Carbon|null $trial_ends_at
  * @property bool $cancel_at_period_end
- * @property \Carbon\Carbon|null $cancelled_at
- * @property \Carbon\Carbon|null $ended_at
+ * @property Carbon|null $cancelled_at
+ * @property Carbon|null $ended_at
  * @property array|null $metadata
  */
 class Subscription extends Model
@@ -39,9 +43,9 @@ class Subscription extends Model
     use HasFactory;
     use LogsActivity;
 
-    protected static function newFactory(): \Core\Mod\Commerce\Database\Factories\SubscriptionFactory
+    protected static function newFactory(): SubscriptionFactory
     {
-        return \Core\Mod\Commerce\Database\Factories\SubscriptionFactory::new();
+        return SubscriptionFactory::new();
     }
 
     /**
@@ -231,7 +235,7 @@ class Subscription extends Model
         $this->update(['status' => 'past_due']);
     }
 
-    public function renew(\Carbon\Carbon $periodStart, \Carbon\Carbon $periodEnd): void
+    public function renew(Carbon $periodStart, Carbon $periodEnd): void
     {
         $this->update([
             'status' => 'active',

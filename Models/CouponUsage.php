@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\Models;
 
+use Carbon\Carbon;
 use Core\Tenant\Models\Workspace;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $workspace_id
  * @property int $order_id
  * @property float $discount_amount
- * @property \Carbon\Carbon $created_at
+ * @property Carbon $created_at
  */
 class CouponUsage extends Model
 {

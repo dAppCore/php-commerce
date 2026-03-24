@@ -11,6 +11,7 @@ use Core\Mod\Commerce\Models\CouponUsage;
 use Core\Mod\Commerce\Models\Order;
 use Core\Tenant\Models\Package;
 use Core\Tenant\Models\Workspace;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -217,7 +218,7 @@ class CouponService
     /**
      * Get usage history for a coupon.
      */
-    public function getUsageHistory(Coupon $coupon, int $limit = 50): \Illuminate\Database\Eloquent\Collection
+    public function getUsageHistory(Coupon $coupon, int $limit = 50): Collection
     {
         return $coupon->usages()
             ->with(['workspace', 'order'])

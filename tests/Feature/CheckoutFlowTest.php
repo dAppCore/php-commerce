@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Core\Mod\Commerce\Models\Invoice;
 use Core\Mod\Commerce\Models\Order;
 use Core\Mod\Commerce\Models\Payment;
@@ -9,9 +11,10 @@ use Core\Tenant\Models\Package;
 use Core\Tenant\Models\User;
 use Core\Tenant\Models\Workspace;
 use Core\Tenant\Models\WorkspacePackage;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
 beforeEach(function () {
     Cache::flush();

@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 use Core\Mod\Commerce\Services\WebhookRateLimiter;
 use Illuminate\Cache\RateLimiter;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
 // ============================================================================
 // WebhookRateLimiter Unit Tests

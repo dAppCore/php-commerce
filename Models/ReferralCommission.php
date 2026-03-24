@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Core\Mod\Commerce\Models;
 
+use Carbon\Carbon;
 use Core\Tenant\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -26,10 +27,10 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property float $commission_amount
  * @property string $currency
  * @property string $status
- * @property \Carbon\Carbon|null $matures_at
- * @property \Carbon\Carbon|null $matured_at
+ * @property Carbon|null $matures_at
+ * @property Carbon|null $matured_at
  * @property int|null $payout_id
- * @property \Carbon\Carbon|null $paid_at
+ * @property Carbon|null $paid_at
  * @property string|null $notes
  */
 class ReferralCommission extends Model

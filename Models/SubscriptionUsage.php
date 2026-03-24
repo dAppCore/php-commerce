@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\Models;
 
 use Carbon\Carbon;
@@ -13,10 +15,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $subscription_id
  * @property int $meter_id
  * @property int $quantity
- * @property \Carbon\Carbon $period_start
- * @property \Carbon\Carbon $period_end
+ * @property Carbon $period_start
+ * @property Carbon $period_end
  * @property string|null $stripe_usage_record_id
- * @property \Carbon\Carbon|null $synced_at
+ * @property Carbon|null $synced_at
  * @property bool $billed
  * @property int|null $invoice_item_id
  * @property array|null $metadata

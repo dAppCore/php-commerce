@@ -1,8 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\Models;
 
+use Carbon\Carbon;
 use Core\Mod\Commerce\Contracts\Orderable;
+use Core\Mod\Commerce\Database\Factories\OrderFactory;
+use Core\Mod\Commerce\Services\CurrencyService;
 use Core\Tenant\Models\User;
 use Core\Tenant\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -38,7 +43,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property int|null $coupon_id
  * @property array|null $billing_address
  * @property array|null $metadata
- * @property \Carbon\Carbon|null $paid_at
+ * @property Carbon|null $paid_at
  * @property-read Orderable|null $orderable
  */
 class Order extends Model
@@ -46,9 +51,9 @@ class Order extends Model
     use HasFactory;
     use LogsActivity;
 
-    protected static function newFactory(): \Core\Mod\Commerce\Database\Factories\OrderFactory
+    protected static function newFactory(): OrderFactory
     {
-        return \Core\Mod\Commerce\Database\Factories\OrderFactory::new();
+        return OrderFactory::new();
     }
 
     protected $fillable = [
@@ -291,7 +296,7 @@ class Order extends Model
      */
     public function getFormattedTotalAttribute(): string
     {
-        $currencyService = app(\Core\Mod\Commerce\Services\CurrencyService::class);
+        $currencyService = app(CurrencyService::class);
 
         return $currencyService->format($this->total, $this->display_currency);
     }
@@ -301,7 +306,7 @@ class Order extends Model
      */
     public function getFormattedSubtotalAttribute(): string
     {
-        $currencyService = app(\Core\Mod\Commerce\Services\CurrencyService::class);
+        $currencyService = app(CurrencyService::class);
 
         return $currencyService->format($this->subtotal, $this->display_currency);
     }
@@ -311,7 +316,7 @@ class Order extends Model
      */
     public function getFormattedTaxAmountAttribute(): string
     {
-        $currencyService = app(\Core\Mod\Commerce\Services\CurrencyService::class);
+        $currencyService = app(CurrencyService::class);
 
         return $currencyService->format($this->tax_amount, $this->display_currency);
     }
@@ -321,7 +326,7 @@ class Order extends Model
      */
     public function getFormattedDiscountAmountAttribute(): string
     {
-        $currencyService = app(\Core\Mod\Commerce\Services\CurrencyService::class);
+        $currencyService = app(CurrencyService::class);
 
         return $currencyService->format($this->discount_amount, $this->display_currency);
     }
@@ -341,7 +346,7 @@ class Order extends Model
             return $amount;
         }
 
-        return \Core\Mod\Commerce\Models\ExchangeRate::convert(
+        return ExchangeRate::convert(
             $amount,
             $this->display_currency,
             $baseCurrency
@@ -363,7 +368,7 @@ class Order extends Model
             return $amount;
         }
 
-        return \Core\Mod\Commerce\Models\ExchangeRate::convert(
+        return ExchangeRate::convert(
             $amount,
             $baseCurrency,
             $this->display_currency

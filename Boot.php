@@ -8,11 +8,32 @@ use Core\Events\AdminPanelBooting;
 use Core\Events\ApiRoutesRegistering;
 use Core\Events\ConsoleBooting;
 use Core\Events\WebRoutesRegistering;
+use Core\Mod\Commerce\Events\OrderPaid;
+use Core\Mod\Commerce\Events\SubscriptionCreated;
+use Core\Mod\Commerce\Events\SubscriptionRenewed;
 use Core\Mod\Commerce\Listeners\ProvisionSocialHostSubscription;
 use Core\Mod\Commerce\Listeners\RewardAgentReferralOnSubscription;
+use Core\Mod\Commerce\Services\CheckoutRateLimiter;
+use Core\Mod\Commerce\Services\CommerceService;
+use Core\Mod\Commerce\Services\ContentOverrideService;
+use Core\Mod\Commerce\Services\CouponService;
+use Core\Mod\Commerce\Services\CreditNoteService;
+use Core\Mod\Commerce\Services\CurrencyService;
+use Core\Mod\Commerce\Services\DunningService;
+use Core\Mod\Commerce\Services\FraudService;
+use Core\Mod\Commerce\Services\InvoiceService;
 use Core\Mod\Commerce\Services\PaymentGateway\BTCPayGateway;
 use Core\Mod\Commerce\Services\PaymentGateway\PaymentGatewayContract;
 use Core\Mod\Commerce\Services\PaymentGateway\StripeGateway;
+use Core\Mod\Commerce\Services\PaymentMethodService;
+use Core\Mod\Commerce\Services\PermissionMatrixService;
+use Core\Mod\Commerce\Services\ReferralService;
+use Core\Mod\Commerce\Services\SkuBuilderService;
+use Core\Mod\Commerce\Services\SkuParserService;
+use Core\Mod\Commerce\Services\SubscriptionService;
+use Core\Mod\Commerce\Services\TaxService;
+use Core\Mod\Commerce\Services\UsageBillingService;
+use Core\Mod\Commerce\Services\WebhookRateLimiter;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -46,9 +67,9 @@ class Boot extends ServiceProvider
 
         // Laravel event listeners (not lifecycle events)
         Event::subscribe(ProvisionSocialHostSubscription::class);
-        Event::listen(\Core\Mod\Commerce\Events\SubscriptionCreated::class, RewardAgentReferralOnSubscription::class);
-        Event::listen(\Core\Mod\Commerce\Events\SubscriptionRenewed::class, Listeners\ResetUsageOnRenewal::class);
-        Event::listen(\Core\Mod\Commerce\Events\OrderPaid::class, Listeners\CreateReferralCommission::class);
+        Event::listen(SubscriptionCreated::class, RewardAgentReferralOnSubscription::class);
+        Event::listen(SubscriptionRenewed::class, Listeners\ResetUsageOnRenewal::class);
+        Event::listen(OrderPaid::class, Listeners\CreateReferralCommission::class);
     }
 
     public function register(): void
@@ -59,24 +80,24 @@ class Boot extends ServiceProvider
         );
 
         // Core Services
-        $this->app->singleton(\Core\Mod\Commerce\Services\CommerceService::class);
-        $this->app->singleton(\Core\Mod\Commerce\Services\SubscriptionService::class);
-        $this->app->singleton(\Core\Mod\Commerce\Services\InvoiceService::class);
-        $this->app->singleton(\Core\Mod\Commerce\Services\PermissionMatrixService::class);
-        $this->app->singleton(\Core\Mod\Commerce\Services\CouponService::class);
-        $this->app->singleton(\Core\Mod\Commerce\Services\TaxService::class);
-        $this->app->singleton(\Core\Mod\Commerce\Services\CurrencyService::class);
-        $this->app->singleton(\Core\Mod\Commerce\Services\ContentOverrideService::class);
-        $this->app->singleton(\Core\Mod\Commerce\Services\DunningService::class);
-        $this->app->singleton(\Core\Mod\Commerce\Services\SkuParserService::class);
-        $this->app->singleton(\Core\Mod\Commerce\Services\SkuBuilderService::class);
-        $this->app->singleton(\Core\Mod\Commerce\Services\CreditNoteService::class);
-        $this->app->singleton(\Core\Mod\Commerce\Services\PaymentMethodService::class);
-        $this->app->singleton(\Core\Mod\Commerce\Services\UsageBillingService::class);
-        $this->app->singleton(\Core\Mod\Commerce\Services\ReferralService::class);
-        $this->app->singleton(\Core\Mod\Commerce\Services\FraudService::class);
-        $this->app->singleton(\Core\Mod\Commerce\Services\CheckoutRateLimiter::class);
-        $this->app->singleton(\Core\Mod\Commerce\Services\WebhookRateLimiter::class);
+        $this->app->singleton(CommerceService::class);
+        $this->app->singleton(SubscriptionService::class);
+        $this->app->singleton(InvoiceService::class);
+        $this->app->singleton(PermissionMatrixService::class);
+        $this->app->singleton(CouponService::class);
+        $this->app->singleton(TaxService::class);
+        $this->app->singleton(CurrencyService::class);
+        $this->app->singleton(ContentOverrideService::class);
+        $this->app->singleton(DunningService::class);
+        $this->app->singleton(SkuParserService::class);
+        $this->app->singleton(SkuBuilderService::class);
+        $this->app->singleton(CreditNoteService::class);
+        $this->app->singleton(PaymentMethodService::class);
+        $this->app->singleton(UsageBillingService::class);
+        $this->app->singleton(ReferralService::class);
+        $this->app->singleton(FraudService::class);
+        $this->app->singleton(CheckoutRateLimiter::class);
+        $this->app->singleton(WebhookRateLimiter::class);
 
         // Payment Gateways
         $this->app->singleton('commerce.gateway.btcpay', function ($app) {

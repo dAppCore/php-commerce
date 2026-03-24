@@ -8,6 +8,7 @@ use Core\Mod\Commerce\Models\Coupon;
 use Core\Mod\Commerce\Models\Order;
 use Core\Mod\Commerce\Models\Subscription;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
@@ -42,7 +43,7 @@ class Dashboard extends Component
     }
 
     #[Computed]
-    public function recentOrders(): \Illuminate\Database\Eloquent\Collection
+    public function recentOrders(): Collection
     {
         return Order::with('workspace')
             ->latest()

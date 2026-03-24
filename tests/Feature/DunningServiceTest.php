@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Carbon\Carbon;
 use Core\Mod\Commerce\Models\Invoice;
 use Core\Mod\Commerce\Models\Subscription;
@@ -12,10 +14,11 @@ use Core\Tenant\Models\Package;
 use Core\Tenant\Models\User;
 use Core\Tenant\Models\Workspace;
 use Core\Tenant\Models\WorkspacePackage;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Notification;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
 beforeEach(function () {
     Cache::flush();
