@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Core\Mod\Commerce\Services;
 
 use Carbon\Carbon;
+use Core\Mod\Commerce\Data\DunningSchedule;
+use Core\Mod\Commerce\Data\PaymentResult;
 use Core\Mod\Commerce\Models\Invoice;
 use Core\Mod\Commerce\Models\Subscription;
 use Core\Mod\Commerce\Notifications\AccountSuspended;
@@ -14,7 +16,9 @@ use Core\Mod\Commerce\Notifications\SubscriptionCancelled;
 use Core\Mod\Commerce\Notifications\SubscriptionPaused;
 use Core\Tenant\Services\EntitlementService;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
 
 /**
  * Dunning service for failed payment recovery.
@@ -33,6 +37,247 @@ class DunningService
         protected SubscriptionService $subscriptions,
         protected EntitlementService $entitlements,
     ) {}
+
+    /**
+     * Build and persist the failed-payment retry schedule for a subscription.
+     */
+    public function schedule(Subscription $subscription): DunningSchedule
+    {
+        if (in_array($subscription->status, ['cancelled', 'expired'], true)) {
+            throw new InvalidArgumentException('Cannot schedule dunning for an ended subscription.');
+        }
+
+        $anchor = $this->dunningAnchor($subscription);
+        $retryDays = $this->retryDays();
+        $retryDates = array_map(
+            fn (int $days): Carbon => $anchor->copy()->addDays($days),
+            $retryDays
+        );
+        $suspensionDate = $anchor->copy()->addDays($this->suspendAfterDays());
+        $schedule = new DunningSchedule($retryDates, $suspensionDate);
+
+        $metadata = $subscription->metadata ?? [];
+        $metadata['dunning'] = [
+            'stage' => 'scheduled',
+            'started_at' => $anchor->toISOString(),
+            'retry_dates' => array_map(
+                fn (Carbon $date): string => $date->toISOString(),
+                $retryDates
+            ),
+            'suspension_date' => $suspensionDate->toISOString(),
+        ];
+
+        $updates = ['metadata' => $metadata];
+        if (in_array($subscription->status, ['active', 'trialing'], true)) {
+            $updates['status'] = 'past_due';
+        }
+
+        $subscription->update($updates);
+
+        Log::info('Dunning schedule created', [
+            'subscription_id' => $subscription->id,
+            'workspace_id' => $subscription->workspace_id,
+            'retry_dates' => $metadata['dunning']['retry_dates'],
+            'suspension_date' => $metadata['dunning']['suspension_date'],
+        ]);
+
+        return $schedule;
+    }
+
+    /**
+     * Retry payment for an overdue invoice.
+     */
+    public function retry(Invoice $invoice): PaymentResult
+    {
+        if ($invoice->isPaid()) {
+            $subscription = $this->findSubscriptionForInvoice($invoice);
+            if ($subscription) {
+                $this->recover($subscription);
+            }
+
+            return PaymentResult::successful($invoice->payment, $invoice->charge_attempts ?? 0);
+        }
+
+        if (! $invoice->auto_charge) {
+            return PaymentResult::failed(
+                'Invoice is not configured for automatic charging.',
+                $invoice->charge_attempts ?? 0
+            );
+        }
+
+        $attempts = ($invoice->charge_attempts ?? 0) + 1;
+
+        $invoice->update([
+            'status' => 'overdue',
+            'charge_attempts' => $attempts,
+            'last_charge_attempt' => now(),
+        ]);
+
+        try {
+            $successful = $this->commerce->retryInvoicePayment($invoice->fresh());
+        } catch (\Throwable $e) {
+            $nextRetry = $this->calculateNextRetry($attempts);
+
+            $invoice->update([
+                'next_charge_attempt' => $nextRetry,
+            ]);
+
+            Log::error('Payment retry exception', [
+                'invoice_id' => $invoice->id,
+                'attempt' => $attempts,
+                'error' => $e->getMessage(),
+            ]);
+
+            return PaymentResult::failed($e->getMessage(), $attempts, $nextRetry);
+        }
+
+        $invoice->refresh();
+        $subscription = $this->findSubscriptionForInvoice($invoice);
+
+        if ($successful) {
+            $invoice->update([
+                'next_charge_attempt' => null,
+            ]);
+
+            if ($subscription) {
+                $this->recover($subscription);
+            }
+
+            Log::info('Payment retry succeeded', [
+                'invoice_id' => $invoice->id,
+                'subscription_id' => $subscription?->id,
+                'attempt' => $attempts,
+            ]);
+
+            return PaymentResult::successful($invoice->payment, $attempts);
+        }
+
+        $nextRetry = $this->calculateNextRetry($attempts);
+        $invoice->update([
+            'next_charge_attempt' => $nextRetry,
+        ]);
+
+        if ($subscription) {
+            $this->notify($subscription, 'retry');
+        }
+
+        Log::info('Payment retry failed', [
+            'invoice_id' => $invoice->id,
+            'subscription_id' => $subscription?->id,
+            'attempt' => $attempts,
+            'next_retry' => $nextRetry,
+        ]);
+
+        return PaymentResult::failed('Payment retry failed.', $attempts, $nextRetry);
+    }
+
+    /**
+     * Suspend a subscription and its workspace after dunning is exhausted.
+     */
+    public function suspend(Subscription $subscription): void
+    {
+        if (in_array($subscription->status, ['cancelled', 'expired'], true)) {
+            throw new InvalidArgumentException('Cannot suspend an ended subscription.');
+        }
+
+        $workspace = $subscription->workspace;
+        if (! $workspace) {
+            throw new InvalidArgumentException('Cannot suspend a subscription without a workspace.');
+        }
+
+        $metadata = $subscription->metadata ?? [];
+        $metadata['dunning'] = array_merge($metadata['dunning'] ?? [], [
+            'stage' => 'suspended',
+            'suspended_at' => now()->toISOString(),
+        ]);
+
+        $subscription->update([
+            'status' => 'suspended',
+            'paused_at' => $subscription->paused_at ?? now(),
+            'metadata' => $metadata,
+        ]);
+
+        $this->entitlements->suspendWorkspace($workspace, 'dunning');
+        $this->notify($subscription->fresh(), 'suspended');
+
+        Log::info('Subscription suspended due to dunning', [
+            'subscription_id' => $subscription->id,
+            'workspace_id' => $subscription->workspace_id,
+        ]);
+    }
+
+    /**
+     * Send the notification for a dunning stage and dispatch a lightweight stage event.
+     */
+    public function notify(Subscription $subscription, string $stage): void
+    {
+        $stage = $this->normaliseStage($stage);
+        Event::dispatch('commerce.dunning.notified', [$subscription, $stage]);
+
+        if (! config('commerce.dunning.send_notifications', true)) {
+            return;
+        }
+
+        $workspace = $subscription->workspace;
+        $owner = $workspace?->owner();
+
+        if (! $owner) {
+            Log::warning('Dunning notification skipped because no workspace owner was found', [
+                'subscription_id' => $subscription->id,
+                'workspace_id' => $subscription->workspace_id,
+                'stage' => $stage,
+            ]);
+
+            return;
+        }
+
+        $notification = match ($stage) {
+            'failed' => new PaymentFailed($subscription),
+            'retry' => $this->retryNotification($subscription),
+            'paused' => new SubscriptionPaused($subscription),
+            'suspended' => new AccountSuspended($subscription),
+            'cancelled' => new SubscriptionCancelled($subscription),
+        };
+
+        $owner->notify($notification);
+    }
+
+    /**
+     * Clear dunning state once payment has recovered.
+     */
+    public function recover(Subscription $subscription): void
+    {
+        $wasRestricted = in_array($subscription->status, ['paused', 'suspended'], true);
+        $metadata = $subscription->metadata ?? [];
+        unset($metadata['dunning']);
+
+        $updates = [
+            'metadata' => $metadata,
+        ];
+
+        if (in_array($subscription->status, ['past_due', 'paused', 'suspended'], true)) {
+            $updates['status'] = 'active';
+            $updates['paused_at'] = null;
+        }
+
+        $subscription->update($updates);
+
+        if ($subscription->workspace_id) {
+            Invoice::query()
+                ->where('workspace_id', $subscription->workspace_id)
+                ->whereNotNull('next_charge_attempt')
+                ->update(['next_charge_attempt' => null]);
+        }
+
+        if ($wasRestricted && $subscription->workspace) {
+            $this->entitlements->reactivateWorkspace($subscription->workspace, 'dunning_recovery');
+        }
+
+        Log::info('Dunning state cleared after payment recovery', [
+            'subscription_id' => $subscription->id,
+            'workspace_id' => $subscription->workspace_id,
+        ]);
+    }
 
     /**
      * Handle a failed payment for an invoice.
@@ -422,7 +667,96 @@ class DunningService
 
         return Subscription::query()
             ->where('workspace_id', $invoice->workspace_id)
-            ->whereIn('status', ['active', 'past_due', 'paused'])
+            ->whereIn('status', ['active', 'past_due', 'paused', 'suspended'])
             ->first();
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    protected function retryDays(): array
+    {
+        $retryDays = config('commerce.dunning.retry_days', [1, 3, 7]);
+
+        if (! is_array($retryDays)) {
+            throw new InvalidArgumentException('Dunning retry days must be configured as an array.');
+        }
+
+        return array_map(function (mixed $days): int {
+            if (! is_numeric($days) || (int) $days < 1) {
+                throw new InvalidArgumentException('Dunning retry days must be positive integers.');
+            }
+
+            return (int) $days;
+        }, array_values($retryDays));
+    }
+
+    protected function suspendAfterDays(): int
+    {
+        $days = config('commerce.dunning.suspend_after_days', 14);
+
+        if (! is_numeric($days) || (int) $days < 1) {
+            throw new InvalidArgumentException('Dunning suspension days must be a positive integer.');
+        }
+
+        return (int) $days;
+    }
+
+    protected function dunningAnchor(Subscription $subscription): Carbon
+    {
+        $startedAt = data_get($subscription->metadata, 'dunning.started_at');
+
+        if ($startedAt) {
+            return Carbon::parse($startedAt);
+        }
+
+        $invoice = $this->latestDunningInvoice($subscription);
+        $anchor = $invoice?->last_charge_attempt
+            ?? $invoice?->due_date
+            ?? now();
+
+        return $anchor instanceof Carbon
+            ? $anchor->copy()
+            : Carbon::parse($anchor);
+    }
+
+    protected function latestDunningInvoice(Subscription $subscription): ?Invoice
+    {
+        if (! $subscription->workspace_id) {
+            return null;
+        }
+
+        return Invoice::query()
+            ->where('workspace_id', $subscription->workspace_id)
+            ->whereIn('status', ['sent', 'pending', 'overdue'])
+            ->orderByRaw('COALESCE(last_charge_attempt, due_date, created_at) DESC')
+            ->first();
+    }
+
+    protected function retryNotification(Subscription $subscription): PaymentRetry|PaymentFailed
+    {
+        $invoice = $this->latestDunningInvoice($subscription);
+
+        if (! $invoice) {
+            return new PaymentFailed($subscription);
+        }
+
+        return new PaymentRetry(
+            $invoice,
+            $invoice->charge_attempts ?? 0,
+            count($this->retryDays())
+        );
+    }
+
+    protected function normaliseStage(string $stage): string
+    {
+        return match (strtolower(trim($stage))) {
+            'failed', 'payment_failed', 'payment-failed' => 'failed',
+            'retry', 'payment_retry', 'payment-retry' => 'retry',
+            'pause', 'paused' => 'paused',
+            'suspend', 'suspended', 'suspension' => 'suspended',
+            'cancel', 'cancelled', 'cancellation' => 'cancelled',
+            default => throw new InvalidArgumentException("Unknown dunning stage [{$stage}]."),
+        };
     }
 }
