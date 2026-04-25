@@ -14,6 +14,14 @@ class SubscriptionCancelled
 
     public function __construct(
         public Subscription $subscription,
-        public bool $immediate = false
-    ) {}
+        public bool $immediate = false,
+        public string $reason = '',
+    ) {
+        $this->subscriptionId = (int) $subscription->id;
+        $this->cancelledAt = $subscription->cancelled_at ?? now();
+    }
+
+    public int $subscriptionId;
+
+    public \DateTimeInterface $cancelledAt;
 }

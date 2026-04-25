@@ -51,14 +51,36 @@ class SubscriptionService
     /**
      * Cancel a subscription (set to expire at period end).
      */
-    public function cancel(Subscription $subscription, ?string $reason = null): Subscription
-    {
-        $subscription->update([
+    public function cancel(
+        Subscription $subscription,
+        bool|string|null $immediateOrReason = null,
+        ?string $reason = null
+    ): Subscription {
+        $immediate = is_bool($immediateOrReason) ? $immediateOrReason : false;
+        $reason = is_bool($immediateOrReason) ? $reason : $immediateOrReason;
+
+        $updates = [
             'cancelled_at' => Carbon::now(),
             'cancellation_reason' => $reason,
-        ]);
+        ];
+
+        if ($immediate) {
+            $updates['status'] = 'cancelled';
+            $updates['ended_at'] = Carbon::now();
+            $updates['current_period_end'] = Carbon::now();
+        }
+
+        $subscription->update($updates);
 
         return $subscription->fresh();
+    }
+
+    public function getDueForRenewal(): Collection
+    {
+        return Subscription::query()
+            ->where('status', 'active')
+            ->where('current_period_end', '<=', Carbon::now())
+            ->get();
     }
 
     /**

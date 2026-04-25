@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Core\Mod\Commerce\Services;
 
 use Core\Mod\Commerce\Contracts\Orderable;
+use Core\Mod\Commerce\Contracts\PaymentGatewayContract as RfcPaymentGatewayContract;
 use Core\Mod\Commerce\Data\FraudAssessment;
 use Core\Mod\Commerce\Events\OrderPaid;
 use Core\Mod\Commerce\Exceptions\CheckoutRateLimitException;
@@ -14,6 +15,8 @@ use Core\Mod\Commerce\Models\Invoice;
 use Core\Mod\Commerce\Models\Order;
 use Core\Mod\Commerce\Models\OrderItem;
 use Core\Mod\Commerce\Models\Payment;
+use Core\Mod\Commerce\Models\PaymentMethod;
+use Core\Mod\Commerce\Models\Product;
 use Core\Mod\Commerce\Models\Refund;
 use Core\Mod\Commerce\Models\Subscription;
 use Core\Mod\Commerce\Services\PaymentGateway\PaymentGatewayContract;
@@ -246,6 +249,120 @@ class CommerceService
         }
 
         return $result;
+    }
+
+    /**
+     * RFC checkout entrypoint for an existing order and stored payment method.
+     *
+     * @return array{order: Order, payment: Payment, gateway_session: array<string, mixed>}
+     */
+    public function checkout(Order $order, PaymentMethod $paymentMethod): array
+    {
+        $payment = Payment::create([
+            'workspace_id' => $order->workspace_id,
+            'order_id' => $order->id,
+            'payment_method_id' => $paymentMethod->id,
+            'gateway' => $paymentMethod->gateway,
+            'amount' => $order->total,
+            'currency' => $order->currency,
+            'status' => 'pending',
+        ]);
+
+        $gateway = app()->bound("commerce.rfc_gateway.{$paymentMethod->gateway}")
+            ? app("commerce.rfc_gateway.{$paymentMethod->gateway}")
+            : app(RfcPaymentGatewayContract::class);
+
+        $gatewaySession = $gateway->createSession($order, $paymentMethod);
+
+        return [
+            'order' => $order->fresh(),
+            'payment' => $payment,
+            'gateway_session' => $gatewaySession,
+        ];
+    }
+
+    public function confirmPayment(Payment $payment, string $gatewayTransactionId): void
+    {
+        $payment->update([
+            'gateway_payment_id' => $gatewayTransactionId,
+            'status' => 'succeeded',
+            'paid_at' => now(),
+        ]);
+
+        $order = Order::find($payment->order_id);
+
+        if ($order && ! $order->isPaid()) {
+            $this->fulfillOrder($order, $payment->fresh());
+        }
+    }
+
+    /**
+     * RFC full checkout flow for cart-style product items.
+     *
+     * @param  array<int, array{product_id?: int, quantity?: int}>  $cartItems
+     * @return array{order: Order, payment: Payment, gateway_session: array<string, mixed>}
+     */
+    public function processCheckout(
+        int $workspaceId,
+        array $cartItems,
+        string $paymentMethodId,
+        ?string $couponCode = null
+    ): array {
+        $workspace = Workspace::findOrFail($workspaceId);
+        $paymentMethod = PaymentMethod::findOrFail($paymentMethodId);
+        $currency = config('commerce.currency', 'GBP');
+
+        $order = DB::transaction(function () use ($workspace, $cartItems, $currency, $couponCode): Order {
+            $order = Order::create([
+                'orderable_type' => Workspace::class,
+                'orderable_id' => $workspace->id,
+                'user_id' => null,
+                'order_number' => Order::generateOrderNumber(),
+                'status' => 'pending',
+                'type' => 'checkout',
+                'currency' => $currency,
+                'subtotal' => 0,
+                'tax_amount' => 0,
+                'discount_amount' => 0,
+                'total' => 0,
+                'billing_name' => $workspace->billing_name ?? $workspace->name,
+                'billing_email' => $workspace->billing_email ?? $workspace->owner()?->email,
+                'billing_address' => method_exists($workspace, 'getBillingAddress') ? $workspace->getBillingAddress() : null,
+                'metadata' => ['coupon_code' => $couponCode],
+            ]);
+
+            $subtotal = 0.0;
+
+            foreach ($cartItems as $item) {
+                $product = Product::findOrFail((int) ($item['product_id'] ?? 0));
+                $quantity = max(1, (int) ($item['quantity'] ?? 1));
+                $unitPrice = $this->productUnitPrice($product);
+                $lineTotal = round($unitPrice * $quantity, 2);
+                $subtotal += $lineTotal;
+
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $product->id,
+                    'item_type' => 'product',
+                    'item_id' => $product->id,
+                    'item_code' => $product->sku,
+                    'description' => $product->name,
+                    'quantity' => $quantity,
+                    'unit_price' => $unitPrice,
+                    'line_total' => $lineTotal,
+                    'billing_cycle' => $product->isSubscription() ? 'monthly' : 'onetime',
+                ]);
+            }
+
+            $order->update([
+                'subtotal' => $subtotal,
+                'total' => $subtotal,
+            ]);
+
+            return $order->fresh(['items']);
+        });
+
+        return $this->checkout($order, $paymentMethod);
     }
 
     /**
@@ -736,5 +853,22 @@ class CommerceService
     public function convertCurrency(float $amount, string $from, string $to): ?float
     {
         return $this->currencyService->convert($amount, $from, $to);
+    }
+
+    protected function productUnitPrice(Product $product): float
+    {
+        $price = $product->prices()
+            ->where('currency', config('commerce.currency', 'GBP'))
+            ->first();
+
+        if ($price) {
+            return $price->amount / 100;
+        }
+
+        if (isset($product->price)) {
+            return ((int) $product->price) / 100;
+        }
+
+        return (float) ($product->base_price ?? 0);
     }
 }

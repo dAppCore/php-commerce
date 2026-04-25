@@ -40,8 +40,10 @@ class PermissionMatrix extends Model
 
     protected $fillable = [
         'entity_id',
+        'target_entity_id',
         'key',
         'scope',
+        'permissions',
         'allowed',
         'locked',
         'source',
@@ -52,6 +54,7 @@ class PermissionMatrix extends Model
 
     protected $casts = [
         'allowed' => 'boolean',
+        'permissions' => 'array',
         'locked' => 'boolean',
         'trained_at' => 'datetime',
     ];
@@ -61,6 +64,11 @@ class PermissionMatrix extends Model
     public function entity(): BelongsTo
     {
         return $this->belongsTo(Entity::class, 'entity_id');
+    }
+
+    public function targetEntity(): BelongsTo
+    {
+        return $this->belongsTo(Entity::class, 'target_entity_id');
     }
 
     public function setByEntity(): BelongsTo

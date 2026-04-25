@@ -59,6 +59,7 @@ class Subscription extends Model
     protected $fillable = [
         'workspace_id',
         'workspace_package_id',
+        'product_id',
         'gateway',
         'gateway_subscription_id',
         'gateway_customer_id',
@@ -101,6 +102,11 @@ class Subscription extends Model
         return $this->belongsTo(WorkspacePackage::class);
     }
 
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
+    }
+
     public function usageRecords(): HasMany
     {
         return $this->hasMany(SubscriptionUsage::class);
@@ -130,7 +136,7 @@ class Subscription extends Model
 
     public function isPaused(): bool
     {
-        return $this->status === 'paused';
+        return in_array($this->status, ['paused', 'suspended'], true);
     }
 
     public function isCancelled(): bool
@@ -169,7 +175,7 @@ class Subscription extends Model
 
     public function isValid(): bool
     {
-        return in_array($this->status, ['active', 'trialing', 'past_due']);
+        return in_array($this->status, ['active', 'trialing', 'past_due', 'suspended'], true);
     }
 
     public function onTrial(): bool
@@ -228,6 +234,14 @@ class Subscription extends Model
     public function pause(): void
     {
         $this->update(['status' => 'paused']);
+    }
+
+    public function suspend(): void
+    {
+        $this->update([
+            'status' => 'suspended',
+            'paused_at' => $this->paused_at ?? now(),
+        ]);
     }
 
     public function markPastDue(): void

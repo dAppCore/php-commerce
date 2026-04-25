@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 
 class ProcessDunning extends Command
 {
-    protected $signature = 'commerce:process-dunning
+    protected $signature = 'commerce:dunning
                             {--dry-run : Show what would happen without making changes}
                             {--stage= : Process only a specific stage (retry, pause, suspend, cancel, expire)}';
 

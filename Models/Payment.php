@@ -45,6 +45,7 @@ class Payment extends Model
         'workspace_id',
         'invoice_id',
         'order_id',
+        'payment_method_id',
         'gateway',
         'gateway_payment_id',
         'gateway_customer_id',

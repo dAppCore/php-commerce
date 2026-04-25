@@ -28,6 +28,7 @@ class ProductPrice extends Model
         'product_id',
         'currency',
         'amount',
+        'billing_cycle',
         'is_manual',
         'exchange_rate_used',
     ];

@@ -49,6 +49,7 @@ class CreditNote extends Model
     protected $fillable = [
         'workspace_id',
         'user_id',
+        'invoice_id',
         'order_id',
         'refund_id',
         'reference_number',
@@ -91,6 +92,11 @@ class CreditNote extends Model
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
+    }
+
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class);
     }
 
     public function refund(): BelongsTo

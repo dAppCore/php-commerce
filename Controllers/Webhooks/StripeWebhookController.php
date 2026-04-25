@@ -148,6 +148,10 @@ class StripeWebhookController extends Controller
             return false;
         }
 
+        if (! $webhookEvent->wasRecentlyCreated) {
+            return true;
+        }
+
         // If the webhook event we just created has a different ID than the one
         // that already existed in the database, it means this is a duplicate
         $existingEvent = WebhookEvent::where('gateway', 'stripe')

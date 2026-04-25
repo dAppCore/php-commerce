@@ -87,8 +87,12 @@ class DunningService
     /**
      * Retry payment for an overdue invoice.
      */
-    public function retry(Invoice $invoice): PaymentResult
+    public function retry(Invoice|Subscription $invoice): PaymentResult|bool
     {
+        if ($invoice instanceof Subscription) {
+            return $this->retrySubscription($invoice);
+        }
+
         if ($invoice->isPaid()) {
             $subscription = $this->findSubscriptionForInvoice($invoice);
             if ($subscription) {
@@ -169,6 +173,17 @@ class DunningService
         ]);
 
         return PaymentResult::failed('Payment retry failed.', $attempts, $nextRetry);
+    }
+
+    public function retrySubscription(Subscription $subscription): bool
+    {
+        $invoice = $this->latestDunningInvoice($subscription);
+
+        if (! $invoice) {
+            return false;
+        }
+
+        return $this->retry($invoice)->succeeded();
     }
 
     /**
@@ -371,7 +386,7 @@ class DunningService
      */
     public function retryPayment(Invoice $invoice): bool
     {
-        $retryDays = config('commerce.dunning.retry_days', [1, 3, 7]);
+        $retryDays = config('commerce.dunning.retry_days', [1, 3, 7, 14]);
         $maxRetries = count($retryDays);
 
         try {
@@ -425,7 +440,7 @@ class DunningService
      */
     public function getSubscriptionsForPause(): Collection
     {
-        $retryDays = config('commerce.dunning.retry_days', [1, 3, 7]);
+        $retryDays = config('commerce.dunning.retry_days', [1, 3, 7, 14]);
         $pauseAfterDays = array_sum($retryDays) + 1; // Day after last retry
 
         return Subscription::query()
@@ -516,7 +531,7 @@ class DunningService
         $cancelAfterDays = config('commerce.dunning.cancel_after_days', 30);
 
         return Subscription::query()
-            ->where('status', 'paused')
+            ->whereIn('status', ['paused', 'suspended'])
             ->where('paused_at', '<=', now()->subDays($cancelAfterDays))
             ->with('workspace')
             ->get();
@@ -573,7 +588,7 @@ class DunningService
      */
     public function calculateNextRetry(int $currentAttempts): ?Carbon
     {
-        $retryDays = config('commerce.dunning.retry_days', [1, 3, 7]);
+        $retryDays = config('commerce.dunning.retry_days', [1, 3, 7, 14]);
 
         // Account for the initial attempt (attempt 0 used grace period)
         $retryIndex = $currentAttempts;
@@ -585,6 +600,40 @@ class DunningService
         $daysUntilNext = $retryDays[$retryIndex] ?? null;
 
         return $daysUntilNext ? now()->addDays($daysUntilNext) : null;
+    }
+
+    public function nextRetryAt(int $attemptCount): Carbon
+    {
+        return $this->calculateNextRetry($attemptCount) ?? now()->addDays(14);
+    }
+
+    /**
+     * Run the RFC dunning pass.
+     *
+     * @return array{retried: int, recovered: int, cancelled: int}
+     */
+    public function processAll(): array
+    {
+        $results = [
+            'retried' => 0,
+            'recovered' => 0,
+            'cancelled' => 0,
+        ];
+
+        foreach ($this->getInvoicesDueForRetry() as $invoice) {
+            $results['retried']++;
+
+            if ($this->retry($invoice)->succeeded()) {
+                $results['recovered']++;
+            }
+        }
+
+        foreach ($this->getSubscriptionsForCancellation() as $subscription) {
+            $this->cancelSubscription($subscription);
+            $results['cancelled']++;
+        }
+
+        return $results;
     }
 
     /**
@@ -626,7 +675,7 @@ class DunningService
             ];
         }
 
-        if ($subscription->status === 'paused') {
+        if (in_array($subscription->status, ['paused', 'suspended'], true)) {
             $pausedDays = $subscription->paused_at
                 ? (int) $subscription->paused_at->diffInDays(now(), false)
                 : 0;
@@ -676,7 +725,7 @@ class DunningService
      */
     protected function retryDays(): array
     {
-        $retryDays = config('commerce.dunning.retry_days', [1, 3, 7]);
+        $retryDays = config('commerce.dunning.retry_days', [1, 3, 7, 14]);
 
         if (! is_array($retryDays)) {
             throw new InvalidArgumentException('Dunning retry days must be configured as an array.');

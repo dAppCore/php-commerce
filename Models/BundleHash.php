@@ -24,6 +24,7 @@ class BundleHash extends Model
 
     protected $fillable = [
         'hash',
+        'product_ids',
         'base_skus',
         'coupon_code',
         'fixed_price',
@@ -42,6 +43,7 @@ class BundleHash extends Model
 
     protected $casts = [
         'fixed_price' => 'decimal:2',
+        'product_ids' => 'array',
         'discount_percent' => 'decimal:2',
         'discount_amount' => 'decimal:2',
         'min_quantity' => 'integer',

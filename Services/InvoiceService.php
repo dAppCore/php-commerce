@@ -76,6 +76,30 @@ class InvoiceService
         return $invoice;
     }
 
+    public function generateFromOrder(Order $order): Invoice
+    {
+        return $this->createFromOrder($order);
+    }
+
+    public function generateFromSubscription(\Core\Mod\Commerce\Models\Subscription $subscription): Invoice
+    {
+        $workspace = $subscription->workspace;
+
+        if (! $workspace) {
+            throw new \InvalidArgumentException('Cannot generate an invoice for a subscription without a workspace.');
+        }
+
+        $package = $subscription->workspacePackage?->package;
+        $billingCycle = $subscription->billing_cycle ?? 'monthly';
+        $amount = $package ? (float) $package->getPrice($billingCycle) : 0.0;
+
+        return $this->createForRenewal(
+            $workspace,
+            $amount,
+            $package ? "{$package->name} subscription renewal" : 'Subscription renewal'
+        );
+    }
+
     /**
      * Create an invoice for a subscription renewal.
      */
@@ -131,6 +155,16 @@ class InvoiceService
     public function markAsPaid(Invoice $invoice, Payment $payment): void
     {
         $invoice->markAsPaid($payment);
+    }
+
+    public function markPaid(Invoice $invoice, Payment $payment): void
+    {
+        $this->markAsPaid($invoice, $payment);
+    }
+
+    public function markOverdue(Invoice $invoice): void
+    {
+        $invoice->update(['status' => 'overdue']);
     }
 
     /**
@@ -219,6 +253,11 @@ class InvoiceService
         }
 
         Mail::to($recipientEmail)->queue(new InvoiceGenerated($invoice));
+    }
+
+    public function sendByEmail(Invoice $invoice): void
+    {
+        $this->sendEmail($invoice);
     }
 
     /**

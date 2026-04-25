@@ -15,7 +15,7 @@ use Illuminate\Console\Command;
  */
 class RefreshExchangeRates extends Command
 {
-    protected $signature = 'commerce:refresh-exchange-rates
+    protected $signature = 'commerce:exchange-rates
                             {--force : Force refresh even if rates are fresh}';
 
     protected $description = 'Refresh exchange rates from the configured provider';

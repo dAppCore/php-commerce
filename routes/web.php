@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use Core\Mod\Commerce\Controllers\MatrixTrainingController;
+use Core\Mod\Commerce\View\Modal\Web\CheckoutCancel;
+use Core\Mod\Commerce\View\Modal\Web\CheckoutSuccess;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -34,3 +36,6 @@ Route::prefix('commerce')->name('commerce.')->group(function () {
     });
 
 });
+
+Route::get('/checkout/success', CheckoutSuccess::class)->name('checkout.success');
+Route::get('/checkout/cancel', CheckoutCancel::class)->name('checkout.cancel');

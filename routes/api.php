@@ -92,3 +92,25 @@ Route::middleware('auth')->prefix('commerce')->group(function () {
     Route::post('/upgrade', [CommerceController::class, 'executeUpgrade'])
         ->name('api.commerce.upgrade');
 });
+
+Route::middleware('auth')->prefix('v1')->name('api.v1.')->group(function () {
+    Route::post('/checkout', [CommerceController::class, 'checkout'])->name('checkout.store');
+    Route::get('/checkout/{id}', [CommerceController::class, 'checkoutStatus'])->name('checkout.show');
+    Route::post('/checkout/{id}/confirm', [CommerceController::class, 'confirmCheckout'])->name('checkout.confirm');
+
+    Route::get('/orders', [CommerceController::class, 'orders'])->name('orders.index');
+    Route::get('/orders/{order}', [CommerceController::class, 'showOrder'])->name('orders.show');
+
+    Route::get('/subscriptions', [CommerceController::class, 'subscriptions'])->name('subscriptions.index');
+    Route::post('/subscriptions/{subscription}/cancel', [CommerceController::class, 'cancelSubscriptionById'])->name('subscriptions.cancel');
+    Route::post('/subscriptions/{subscription}/change-plan', [CommerceController::class, 'changePlan'])->name('subscriptions.change-plan');
+
+    Route::get('/invoices', [CommerceController::class, 'invoices'])->name('invoices.index');
+    Route::get('/invoices/{invoice}', [CommerceController::class, 'showInvoice'])->name('invoices.show');
+    Route::get('/invoices/{invoice}/pdf', [CommerceController::class, 'downloadInvoice'])->name('invoices.pdf');
+
+    Route::get('/payment-methods', [CommerceController::class, 'paymentMethods'])->name('payment-methods.index');
+    Route::post('/payment-methods', [CommerceController::class, 'storePaymentMethod'])->name('payment-methods.store');
+    Route::delete('/payment-methods/{paymentMethod}', [CommerceController::class, 'deletePaymentMethod'])->name('payment-methods.destroy');
+    Route::post('/payment-methods/{paymentMethod}/default', [CommerceController::class, 'setDefaultPaymentMethod'])->name('payment-methods.default');
+});

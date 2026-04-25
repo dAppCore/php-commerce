@@ -113,6 +113,11 @@ class RefundService
         });
     }
 
+    public function process(Payment $payment, float $amount, string $reason): Refund
+    {
+        return $this->refund($payment, $amount, $reason);
+    }
+
     /**
      * Check if a payment can be refunded.
      */

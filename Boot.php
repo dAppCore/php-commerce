@@ -8,6 +8,7 @@ use Core\Events\AdminPanelBooting;
 use Core\Events\ApiRoutesRegistering;
 use Core\Events\ConsoleBooting;
 use Core\Events\WebRoutesRegistering;
+use Core\Mod\Commerce\Contracts\PaymentGatewayContract as RfcPaymentGatewayContract;
 use Core\Mod\Commerce\Events\OrderPaid;
 use Core\Mod\Commerce\Events\SubscriptionCreated;
 use Core\Mod\Commerce\Events\SubscriptionRenewed;
@@ -27,12 +28,15 @@ use Core\Mod\Commerce\Services\PaymentGateway\PaymentGatewayContract;
 use Core\Mod\Commerce\Services\PaymentGateway\StripeGateway;
 use Core\Mod\Commerce\Services\PaymentMethodService;
 use Core\Mod\Commerce\Services\PermissionMatrixService;
+use Core\Mod\Commerce\Services\ProrationService;
 use Core\Mod\Commerce\Services\ReferralService;
 use Core\Mod\Commerce\Services\SkuBuilderService;
 use Core\Mod\Commerce\Services\SkuParserService;
+use Core\Mod\Commerce\Services\SubscriptionStateMachine;
 use Core\Mod\Commerce\Services\SubscriptionService;
 use Core\Mod\Commerce\Services\TaxService;
 use Core\Mod\Commerce\Services\UsageBillingService;
+use Core\Mod\Commerce\Services\WebhookService;
 use Core\Mod\Commerce\Services\WebhookRateLimiter;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
@@ -98,6 +102,9 @@ class Boot extends ServiceProvider
         $this->app->singleton(FraudService::class);
         $this->app->singleton(CheckoutRateLimiter::class);
         $this->app->singleton(WebhookRateLimiter::class);
+        $this->app->singleton(WebhookService::class);
+        $this->app->singleton(SubscriptionStateMachine::class);
+        $this->app->singleton(ProrationService::class);
 
         // Payment Gateways
         $this->app->singleton('commerce.gateway.btcpay', function ($app) {
@@ -108,12 +115,28 @@ class Boot extends ServiceProvider
             return new StripeGateway;
         });
 
+        $this->app->singleton('commerce.rfc_gateway.btcpay', function ($app) {
+            return new Services\BTCPayGateway;
+        });
+
+        $this->app->singleton('commerce.rfc_gateway.stripe', function ($app) {
+            return new Services\StripeGateway;
+        });
+
         $this->app->bind(PaymentGatewayContract::class, function ($app) {
             $defaultGateway = config('commerce.gateways.btcpay.enabled')
                 ? 'btcpay'
                 : 'stripe';
 
             return $app->make("commerce.gateway.{$defaultGateway}");
+        });
+
+        $this->app->bind(RfcPaymentGatewayContract::class, function ($app) {
+            $defaultGateway = config('commerce.gateways.btcpay.enabled')
+                ? 'btcpay'
+                : 'stripe';
+
+            return $app->make("commerce.rfc_gateway.{$defaultGateway}");
         });
     }
 

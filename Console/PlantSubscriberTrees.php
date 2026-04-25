@@ -22,7 +22,7 @@ use Mod\Trees\Models\TreePlanting;
  */
 class PlantSubscriberTrees extends Command
 {
-    protected $signature = 'trees:subscriber-monthly
+    protected $signature = 'commerce:plant-trees
                             {--dry-run : Show what would be planted without actually planting}
                             {--force : Ignore monthly check and plant regardless}';
 

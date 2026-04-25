@@ -43,9 +43,12 @@ class PermissionRequest extends Model
 
     protected $fillable = [
         'entity_id',
+        'from_entity_id',
+        'to_entity_id',
         'method',
         'route',
         'action',
+        'permissions',
         'scope',
         'request_data',
         'user_agent',
@@ -58,6 +61,7 @@ class PermissionRequest extends Model
 
     protected $casts = [
         'request_data' => 'array',
+        'permissions' => 'array',
         'was_trained' => 'boolean',
         'trained_at' => 'datetime',
     ];
@@ -67,6 +71,16 @@ class PermissionRequest extends Model
     public function entity(): BelongsTo
     {
         return $this->belongsTo(Entity::class, 'entity_id');
+    }
+
+    public function fromEntity(): BelongsTo
+    {
+        return $this->belongsTo(Entity::class, 'from_entity_id');
+    }
+
+    public function toEntity(): BelongsTo
+    {
+        return $this->belongsTo(Entity::class, 'to_entity_id');
     }
 
     public function user(): BelongsTo

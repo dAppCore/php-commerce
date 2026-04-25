@@ -49,3 +49,8 @@ Route::prefix('hub/commerce')->name('hub.commerce.')->group(function () {
     Route::get('/credit-notes', CreditNoteManager::class)->name('credit-notes');
     Route::get('/referrals', ReferralManager::class)->name('referrals');
 });
+
+Route::prefix('admin/commerce')->name('admin.commerce.')->group(function () {
+    Route::get('/matrix/training', [Core\Mod\Commerce\Controllers\MatrixTrainingController::class, 'pending'])
+        ->name('matrix.training');
+});
