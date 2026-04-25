@@ -5,10 +5,14 @@ declare(strict_types=1);
 namespace Core\Mod\Commerce\Services;
 
 use Core\Mod\Commerce\Data\FraudAssessment;
+use Core\Mod\Commerce\Data\FraudScore;
 use Core\Mod\Commerce\Models\Order;
 use Core\Mod\Commerce\Models\Payment;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
+use RuntimeException;
 
 /**
  * Fraud detection and scoring service.
@@ -28,6 +32,145 @@ class FraudService
     public const RISK_NORMAL = 'normal';
 
     public const RISK_NOT_ASSESSED = 'not_assessed';
+
+    public const RECOMMENDATION_APPROVE = 'approve';
+
+    public const RECOMMENDATION_REVIEW = 'review';
+
+    public const RECOMMENDATION_BLOCK = 'block';
+
+    public const ORDER_STATUS_PENDING_REVIEW = 'pending_review';
+
+    private const FRAUD_REVIEW_PENDING = 'pending';
+
+    private const FRAUD_REVIEW_APPROVED = 'approved';
+
+    private const FRAUD_REVIEW_BLOCKED = 'blocked';
+
+    private const MAX_REASON_LENGTH = 500;
+
+    private const SIGNAL_WEIGHTS = [
+        'velocity_ip_exceeded' => 35,
+        'velocity_email_exceeded' => 25,
+        'velocity_failed_exceeded' => 35,
+        'geo_country_mismatch' => 20,
+        'high_risk_country' => 60,
+        'card_bin_country_mismatch' => 25,
+        'network_declined' => 15,
+    ];
+
+    /**
+     * Score an order for fraud risk.
+     */
+    public function score(Order $order): FraudScore
+    {
+        if (! config('commerce.fraud.enabled', true)) {
+            return new FraudScore(
+                score: 0,
+                signals: [],
+                recommendation: self::RECOMMENDATION_APPROVE
+            );
+        }
+
+        $score = 0;
+        $signals = [];
+
+        if (config('commerce.fraud.velocity.enabled', true)) {
+            $this->addSignalsToScore($signals, $score, $this->checkVelocity($order));
+        }
+
+        if (config('commerce.fraud.geo.enabled', true)) {
+            $this->addSignalsToScore($signals, $score, $this->checkGeoAnomalies($order));
+        }
+
+        $this->addSignalsToScore($signals, $score, $this->checkCardBinMismatch($order));
+        $score = max($score, $this->scoreStripeRadarSignals($order, $signals));
+        $score = $this->clampScore($score);
+
+        return new FraudScore(
+            score: $score,
+            signals: $signals,
+            recommendation: $this->recommendationForScore($score)
+        );
+    }
+
+    /**
+     * Mark an order for manual fraud review.
+     */
+    public function flag(Order $order, string $reason): void
+    {
+        $reason = $this->normaliseReason($reason);
+        $metadata = $this->metadataWithFraudState($order, [
+            'review_status' => self::FRAUD_REVIEW_PENDING,
+            'review_reason' => $reason,
+            'previous_status' => $this->previousOrderStatus($order),
+            'flagged_at' => now()->toIso8601String(),
+            'approved_at' => null,
+            'blocked_at' => null,
+        ]);
+
+        $order->update([
+            'status' => self::ORDER_STATUS_PENDING_REVIEW,
+            'metadata' => $metadata,
+        ]);
+    }
+
+    /**
+     * Reject an order due to confirmed fraud.
+     */
+    public function block(Order $order, string $reason): void
+    {
+        $reason = $this->normaliseReason($reason);
+        $metadata = $this->metadataWithFraudState($order, [
+            'review_status' => self::FRAUD_REVIEW_BLOCKED,
+            'block_reason' => $reason,
+            'blocked_at' => now()->toIso8601String(),
+            'failure_reason' => $reason,
+        ]);
+
+        $metadata['failure_reason'] = $reason;
+        $metadata['failed_at'] = now()->toIso8601String();
+
+        $order->update([
+            'status' => 'failed',
+            'metadata' => $metadata,
+        ]);
+    }
+
+    /**
+     * Orders waiting for manual fraud review.
+     *
+     * @return Collection<int, Order>
+     */
+    public function reviewQueue(): Collection
+    {
+        return Order::query()
+            ->where('status', self::ORDER_STATUS_PENDING_REVIEW)
+            ->oldest()
+            ->get()
+            ->filter(fn (Order $order): bool => data_get($order->metadata, 'fraud.review_status') === self::FRAUD_REVIEW_PENDING)
+            ->values();
+    }
+
+    /**
+     * Approve an order that was held for fraud review.
+     */
+    public function approve(Order $order): void
+    {
+        if (data_get($order->metadata, 'fraud.review_status') !== self::FRAUD_REVIEW_PENDING) {
+            throw new RuntimeException('Only orders pending fraud review can be approved.');
+        }
+
+        $metadata = $this->metadataWithFraudState($order, [
+            'review_status' => self::FRAUD_REVIEW_APPROVED,
+            'approved_at' => now()->toIso8601String(),
+        ]);
+
+        $order->update([
+            'status' => data_get($metadata, 'fraud.previous_status', 'pending'),
+            'metadata' => $metadata,
+        ]);
+    }
 
     /**
      * Assess fraud risk for an order before checkout.
@@ -162,9 +305,9 @@ class FraudService
     protected function checkVelocity(Order $order): array
     {
         $signals = [];
-        $ip = request()->ip();
+        $ip = $this->getOrderIp($order);
         $email = $order->billing_email;
-        $workspaceId = $order->orderable_id;
+        $workspaceId = $this->getOrderWorkspaceId($order);
 
         $maxOrdersPerIpHourly = config('commerce.fraud.velocity.max_orders_per_ip_hourly', 5);
         $maxOrdersPerEmailDaily = config('commerce.fraud.velocity.max_orders_per_email_daily', 10);
@@ -227,8 +370,8 @@ class FraudService
     protected function checkGeoAnomalies(Order $order): array
     {
         $signals = [];
-        $billingCountry = $order->billing_address['country'] ?? $order->tax_country ?? null;
-        $ipCountry = $this->getIpCountry();
+        $billingCountry = $this->getBillingCountry($order);
+        $ipCountry = $this->getIpCountry($order);
 
         // Check for country mismatch
         if (config('commerce.fraud.geo.flag_country_mismatch', true)) {
@@ -241,7 +384,11 @@ class FraudService
         }
 
         // Check for high-risk countries
-        $highRiskCountries = config('commerce.fraud.geo.high_risk_countries', []);
+        $configuredHighRiskCountries = config('commerce.fraud.geo.high_risk_countries', []);
+        $highRiskCountries = array_map(
+            fn (mixed $country): ?string => $this->normaliseCountry($country),
+            is_array($configuredHighRiskCountries) ? $configuredHighRiskCountries : []
+        );
         if (! empty($highRiskCountries) && $billingCountry) {
             if (in_array($billingCountry, $highRiskCountries, true)) {
                 $signals['high_risk_country'] = $billingCountry;
@@ -254,9 +401,21 @@ class FraudService
     /**
      * Get country code from IP address.
      */
-    protected function getIpCountry(): ?string
+    protected function getIpCountry(?Order $order = null): ?string
     {
-        $ip = request()->ip();
+        if ($order) {
+            $metadata = $order->metadata ?? [];
+            $metadataCountry = data_get($metadata, 'ip_country')
+                ?? data_get($metadata, 'ip_country_code')
+                ?? data_get($metadata, 'geo.country')
+                ?? data_get($metadata, 'ip.country');
+
+            if ($metadataCountry) {
+                return $this->normaliseCountry($metadataCountry);
+            }
+        }
+
+        $ip = $order ? $this->getOrderIp($order) : request()->ip();
         if (! $ip || $ip === '127.0.0.1' || str_starts_with($ip, '192.168.')) {
             return null;
         }
@@ -277,6 +436,204 @@ class FraudService
                 return null;
             }
         });
+    }
+
+    /**
+     * Check for card issuing country mismatch against billing country.
+     */
+    protected function checkCardBinMismatch(Order $order): array
+    {
+        $billingCountry = $this->getBillingCountry($order);
+        $metadata = $order->metadata ?? [];
+        $cardCountry = $this->normaliseCountry(
+            data_get($metadata, 'card_bin_country')
+            ?? data_get($metadata, 'card.bin_country')
+            ?? data_get($metadata, 'payment_method.card_country')
+            ?? data_get($metadata, 'payment_method_details.card.country')
+            ?? data_get($metadata, 'stripe.payment_method_details.card.country')
+        );
+
+        if (! $billingCountry || ! $cardCountry || $billingCountry === $cardCountry) {
+            return [];
+        }
+
+        return [
+            'card_bin_country_mismatch' => [
+                'billing_country' => $billingCountry,
+                'card_country' => $cardCountry,
+            ],
+        ];
+    }
+
+    /**
+     * Fold weighted signals into the running fraud score.
+     *
+     * @param  array<string, mixed>  $signals
+     * @param  array<string, mixed>  $newSignals
+     */
+    protected function addSignalsToScore(array &$signals, int &$score, array $newSignals): void
+    {
+        foreach ($newSignals as $key => $value) {
+            $signals[$key] = $value;
+            $score += self::SIGNAL_WEIGHTS[$key] ?? 10;
+        }
+    }
+
+    /**
+     * Convert Stripe Radar metadata into score and signals.
+     *
+     * @param  array<string, mixed>  $signals
+     */
+    protected function scoreStripeRadarSignals(Order $order, array &$signals): int
+    {
+        $radar = $this->getStripeRadarMetadata($order);
+
+        if ($radar === []) {
+            return 0;
+        }
+
+        $score = 0;
+        $riskLevel = data_get($radar, 'risk_level') ?? data_get($radar, 'riskLevel');
+        $riskScore = data_get($radar, 'risk_score') ?? data_get($radar, 'stripe_risk_score');
+
+        if ($riskLevel === self::RISK_HIGHEST) {
+            $signals['stripe_risk_highest'] = true;
+            $score = max($score, 90);
+        } elseif ($riskLevel === self::RISK_ELEVATED) {
+            $signals['stripe_risk_elevated'] = true;
+            $score = max($score, 60);
+        }
+
+        if (is_numeric($riskScore)) {
+            $signals['stripe_risk_score'] = (int) $riskScore;
+            $score = max($score, (int) $riskScore);
+        }
+
+        $ruleAction = data_get($radar, 'rule.action') ?? data_get($radar, 'stripe_rule_action');
+        if ($ruleAction) {
+            $signals['stripe_rule_action'] = $ruleAction;
+        }
+
+        if ($ruleAction === 'block') {
+            $score = 100;
+        }
+
+        $networkStatus = data_get($radar, 'network_status');
+        if ($networkStatus === 'declined_by_network') {
+            $signals['network_declined'] = true;
+            $score += self::SIGNAL_WEIGHTS['network_declined'];
+        }
+
+        return $this->clampScore($score);
+    }
+
+    /**
+     * Extract Stripe Radar metadata from known order metadata locations.
+     *
+     * @return array<string, mixed>
+     */
+    protected function getStripeRadarMetadata(Order $order): array
+    {
+        $metadata = $order->metadata ?? [];
+        $radar = data_get($metadata, 'stripe_radar')
+            ?? data_get($metadata, 'stripe.outcome')
+            ?? data_get($metadata, 'payment.outcome')
+            ?? data_get($metadata, 'fraud_assessment');
+
+        return is_array($radar) ? $radar : [];
+    }
+
+    protected function clampScore(int $score): int
+    {
+        return max(0, min(100, $score));
+    }
+
+    protected function recommendationForScore(int $score): string
+    {
+        $blockThreshold = (int) config('commerce.fraud.score.block_threshold', 80);
+        $reviewThreshold = (int) config('commerce.fraud.score.review_threshold', 50);
+
+        if ($score >= $blockThreshold) {
+            return self::RECOMMENDATION_BLOCK;
+        }
+
+        if ($score >= $reviewThreshold) {
+            return self::RECOMMENDATION_REVIEW;
+        }
+
+        return self::RECOMMENDATION_APPROVE;
+    }
+
+    protected function getBillingCountry(Order $order): ?string
+    {
+        return $this->normaliseCountry(
+            data_get($order->billing_address, 'country')
+            ?? data_get($order->metadata, 'billing_country')
+            ?? $order->tax_country
+        );
+    }
+
+    protected function normaliseCountry(mixed $country): ?string
+    {
+        if (! is_string($country) || trim($country) === '') {
+            return null;
+        }
+
+        return strtoupper(substr(trim($country), 0, 2));
+    }
+
+    protected function getOrderIp(Order $order): ?string
+    {
+        $metadata = $order->metadata ?? [];
+        $ip = data_get($metadata, 'ip_address')
+            ?? data_get($metadata, 'ip')
+            ?? data_get($metadata, 'customer_ip')
+            ?? request()->ip();
+
+        return is_string($ip) && trim($ip) !== '' ? trim($ip) : null;
+    }
+
+    protected function getOrderWorkspaceId(Order $order): ?int
+    {
+        $workspaceId = $order->getAttribute('workspace_id')
+            ?? $order->getAttribute('workspaceId')
+            ?? $order->workspace_id
+            ?? $order->orderable_id;
+
+        return $workspaceId === null ? null : (int) $workspaceId;
+    }
+
+    protected function normaliseReason(string $reason): string
+    {
+        $reason = trim((string) preg_replace('/[[:cntrl:]]+/', ' ', $reason));
+
+        if ($reason === '') {
+            throw new InvalidArgumentException('Fraud reason is required.');
+        }
+
+        return substr($reason, 0, self::MAX_REASON_LENGTH);
+    }
+
+    /**
+     * @param  array<string, mixed>  $fraudState
+     * @return array<string, mixed>
+     */
+    protected function metadataWithFraudState(Order $order, array $fraudState): array
+    {
+        $metadata = $order->metadata ?? [];
+        $fraud = is_array($metadata['fraud'] ?? null) ? $metadata['fraud'] : [];
+        $metadata['fraud'] = array_merge($fraud, $fraudState);
+
+        return $metadata;
+    }
+
+    protected function previousOrderStatus(Order $order): string
+    {
+        if ($order->status !== self::ORDER_STATUS_PENDING_REVIEW) {
+            return $order->status;
+        }
+
+        return data_get($order->metadata, 'fraud.previous_status', 'pending');
     }
 
     /**
@@ -366,7 +723,7 @@ class FraudService
      */
     public function recordFailedPayment(Order $order): void
     {
-        $workspaceId = $order->orderable_id;
+        $workspaceId = $this->getOrderWorkspaceId($order);
 
         if ($workspaceId) {
             $failedKey = "fraud:failed:workspace:{$workspaceId}";
