@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Core\Mod\Commerce\Models;
 
+use Carbon\Carbon;
 use Core\Tenant\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -24,8 +25,8 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property int $cookie_days
  * @property int|null $max_uses
  * @property int $uses_count
- * @property \Carbon\Carbon|null $valid_from
- * @property \Carbon\Carbon|null $valid_until
+ * @property Carbon|null $valid_from
+ * @property Carbon|null $valid_until
  * @property bool $is_active
  * @property string|null $campaign_name
  * @property array|null $metadata

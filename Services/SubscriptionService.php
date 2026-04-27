@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\Services;
 
 use Carbon\Carbon;
@@ -9,6 +11,7 @@ use Core\Tenant\Models\Package;
 use Core\Tenant\Models\Workspace;
 use Core\Tenant\Models\WorkspacePackage;
 use Core\Tenant\Services\EntitlementService;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -48,14 +51,36 @@ class SubscriptionService
     /**
      * Cancel a subscription (set to expire at period end).
      */
-    public function cancel(Subscription $subscription, ?string $reason = null): Subscription
-    {
-        $subscription->update([
+    public function cancel(
+        Subscription $subscription,
+        bool|string|null $immediateOrReason = null,
+        ?string $reason = null
+    ): Subscription {
+        $immediate = is_bool($immediateOrReason) ? $immediateOrReason : false;
+        $reason = is_bool($immediateOrReason) ? $reason : $immediateOrReason;
+
+        $updates = [
             'cancelled_at' => Carbon::now(),
             'cancellation_reason' => $reason,
-        ]);
+        ];
+
+        if ($immediate) {
+            $updates['status'] = 'cancelled';
+            $updates['ended_at'] = Carbon::now();
+            $updates['current_period_end'] = Carbon::now();
+        }
+
+        $subscription->update($updates);
 
         return $subscription->fresh();
+    }
+
+    public function getDueForRenewal(): Collection
+    {
+        return Subscription::query()
+            ->where('status', 'active')
+            ->where('current_period_end', '<=', Carbon::now())
+            ->get();
     }
 
     /**
@@ -414,7 +439,7 @@ class SubscriptionService
     /**
      * Get subscriptions expiring soon (for renewal reminders).
      */
-    public function getExpiringSoon(int $days = 7): \Illuminate\Database\Eloquent\Collection
+    public function getExpiringSoon(int $days = 7): Collection
     {
         return Subscription::query()
             ->active()
@@ -428,7 +453,7 @@ class SubscriptionService
     /**
      * Get subscriptions that have failed payment and need dunning.
      */
-    public function getFailedPayments(): \Illuminate\Database\Eloquent\Collection
+    public function getFailedPayments(): Collection
     {
         return Subscription::query()
             ->where('status', 'past_due')

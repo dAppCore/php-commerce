@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\Models;
 
+use Carbon\Carbon;
 use Core\Tenant\Models\User;
 use Core\Tenant\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -31,9 +34,9 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property string $status
  * @property float $amount_used
  * @property int|null $applied_to_order_id
- * @property \Carbon\Carbon|null $issued_at
- * @property \Carbon\Carbon|null $applied_at
- * @property \Carbon\Carbon|null $voided_at
+ * @property Carbon|null $issued_at
+ * @property Carbon|null $applied_at
+ * @property Carbon|null $voided_at
  * @property int|null $issued_by
  * @property int|null $voided_by
  * @property array|null $metadata
@@ -46,6 +49,7 @@ class CreditNote extends Model
     protected $fillable = [
         'workspace_id',
         'user_id',
+        'invoice_id',
         'order_id',
         'refund_id',
         'reference_number',
@@ -88,6 +92,11 @@ class CreditNote extends Model
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
+    }
+
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class);
     }
 
     public function refund(): BelongsTo

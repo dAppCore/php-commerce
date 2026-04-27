@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\Services;
 
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -9,8 +11,11 @@ use Core\Mod\Commerce\Models\InvoiceItem;
 use Core\Mod\Commerce\Models\Order;
 use Core\Mod\Commerce\Models\Payment;
 use Core\Tenant\Models\Workspace;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Invoice generation and management service.
@@ -71,6 +76,30 @@ class InvoiceService
         return $invoice;
     }
 
+    public function generateFromOrder(Order $order): Invoice
+    {
+        return $this->createFromOrder($order);
+    }
+
+    public function generateFromSubscription(\Core\Mod\Commerce\Models\Subscription $subscription): Invoice
+    {
+        $workspace = $subscription->workspace;
+
+        if (! $workspace) {
+            throw new \InvalidArgumentException('Cannot generate an invoice for a subscription without a workspace.');
+        }
+
+        $package = $subscription->workspacePackage?->package;
+        $billingCycle = $subscription->billing_cycle ?? 'monthly';
+        $amount = $package ? (float) $package->getPrice($billingCycle) : 0.0;
+
+        return $this->createForRenewal(
+            $workspace,
+            $amount,
+            $package ? "{$package->name} subscription renewal" : 'Subscription renewal'
+        );
+    }
+
     /**
      * Create an invoice for a subscription renewal.
      */
@@ -128,6 +157,16 @@ class InvoiceService
         $invoice->markAsPaid($payment);
     }
 
+    public function markPaid(Invoice $invoice, Payment $payment): void
+    {
+        $this->markAsPaid($invoice, $payment);
+    }
+
+    public function markOverdue(Invoice $invoice): void
+    {
+        $invoice->update(['status' => 'overdue']);
+    }
+
     /**
      * Mark invoice as void.
      */
@@ -174,7 +213,7 @@ class InvoiceService
     /**
      * Get PDF download response.
      */
-    public function downloadPdf(Invoice $invoice): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function downloadPdf(Invoice $invoice): StreamedResponse
     {
         $path = $this->getPdf($invoice);
 
@@ -216,10 +255,15 @@ class InvoiceService
         Mail::to($recipientEmail)->queue(new InvoiceGenerated($invoice));
     }
 
+    public function sendByEmail(Invoice $invoice): void
+    {
+        $this->sendEmail($invoice);
+    }
+
     /**
      * Get invoices for a workspace.
      */
-    public function getForWorkspace(Workspace $workspace, int $limit = 25): \Illuminate\Pagination\LengthAwarePaginator
+    public function getForWorkspace(Workspace $workspace, int $limit = 25): LengthAwarePaginator
     {
         return $workspace->invoices()
             ->with('items')
@@ -230,7 +274,7 @@ class InvoiceService
     /**
      * Get unpaid invoices for a workspace.
      */
-    public function getUnpaidForWorkspace(Workspace $workspace): \Illuminate\Database\Eloquent\Collection
+    public function getUnpaidForWorkspace(Workspace $workspace): Collection
     {
         return $workspace->invoices()
             ->pending()
@@ -241,7 +285,7 @@ class InvoiceService
     /**
      * Get overdue invoices for a workspace.
      */
-    public function getOverdueForWorkspace(Workspace $workspace): \Illuminate\Database\Eloquent\Collection
+    public function getOverdueForWorkspace(Workspace $workspace): Collection
     {
         return $workspace->invoices()
             ->pending()

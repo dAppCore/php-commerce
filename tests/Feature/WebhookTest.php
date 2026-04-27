@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Core\Mod\Commerce\Controllers\Webhooks\BTCPayWebhookController;
 use Core\Mod\Commerce\Controllers\Webhooks\StripeWebhookController;
 use Core\Mod\Commerce\Models\Order;
@@ -19,10 +21,12 @@ use Core\Tenant\Models\User;
 use Core\Tenant\Models\Workspace;
 use Core\Tenant\Models\WorkspacePackage;
 use Core\Tenant\Services\EntitlementService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
 use WebhookPayloadValidationException;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
 beforeEach(function () {
     Notification::fake();
@@ -124,7 +128,7 @@ describe('StripeWebhookController', function () {
                 $webhookLogger
             );
 
-            $request = new \Illuminate\Http\Request;
+            $request = new Request;
             $request->headers->set('Stripe-Signature', 't=123,v1=abc');
 
             $response = $controller->handle($request);
@@ -177,7 +181,7 @@ describe('StripeWebhookController', function () {
                 $webhookLogger
             );
 
-            $request = new \Illuminate\Http\Request;
+            $request = new Request;
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200)
@@ -213,7 +217,7 @@ describe('StripeWebhookController', function () {
                 $webhookLogger
             );
 
-            $request = new \Illuminate\Http\Request;
+            $request = new Request;
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200)
@@ -270,7 +274,7 @@ describe('StripeWebhookController', function () {
                 $webhookLogger
             );
 
-            $request = new \Illuminate\Http\Request;
+            $request = new Request;
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200);
@@ -332,7 +336,7 @@ describe('StripeWebhookController', function () {
                 $webhookLogger
             );
 
-            $request = new \Illuminate\Http\Request;
+            $request = new Request;
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200);
@@ -368,7 +372,7 @@ describe('StripeWebhookController', function () {
                 $webhookLogger
             );
 
-            $request = new \Illuminate\Http\Request;
+            $request = new Request;
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200)
@@ -460,7 +464,7 @@ describe('BTCPayWebhookController', function () {
 
             $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-            $request = new \Illuminate\Http\Request;
+            $request = new Request;
             $request->headers->set('BTCPay-Sig', 'valid_signature');
 
             $response = $controller->handle($request);
@@ -500,7 +504,7 @@ describe('BTCPayWebhookController', function () {
 
             $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-            $request = new \Illuminate\Http\Request;
+            $request = new Request;
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200)
@@ -523,7 +527,7 @@ describe('BTCPayWebhookController', function () {
 
             $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-            $request = new \Illuminate\Http\Request;
+            $request = new Request;
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200)
@@ -548,7 +552,7 @@ describe('BTCPayWebhookController', function () {
 
             $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-            $request = new \Illuminate\Http\Request;
+            $request = new Request;
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200);
@@ -575,7 +579,7 @@ describe('BTCPayWebhookController', function () {
 
             $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-            $request = new \Illuminate\Http\Request;
+            $request = new Request;
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200);
@@ -602,7 +606,7 @@ describe('BTCPayWebhookController', function () {
 
             $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-            $request = new \Illuminate\Http\Request;
+            $request = new Request;
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200);
@@ -629,7 +633,7 @@ describe('BTCPayWebhookController', function () {
 
             $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-            $request = new \Illuminate\Http\Request;
+            $request = new Request;
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200);
@@ -656,7 +660,7 @@ describe('BTCPayWebhookController', function () {
 
             $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-            $request = new \Illuminate\Http\Request;
+            $request = new Request;
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200);
@@ -683,7 +687,7 @@ describe('BTCPayWebhookController', function () {
 
             $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-            $request = new \Illuminate\Http\Request;
+            $request = new Request;
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200)
@@ -840,7 +844,7 @@ describe('WebhookLogger service', function () {
     it('extracts relevant headers', function () {
         $logger = new WebhookLogger;
 
-        $request = new \Illuminate\Http\Request;
+        $request = new Request;
         $request->headers->set('Stripe-Signature', 't=123,v1=secret_signature_here');
         $request->headers->set('Content-Type', 'application/json');
         $request->headers->set('User-Agent', 'Stripe/1.0');
@@ -1235,7 +1239,7 @@ describe('BTCPayWebhookController payload validation integration', function () {
         $webhookLogger = new WebhookLogger;
         $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-        $request = new \Illuminate\Http\Request;
+        $request = new Request;
         $request->headers->set('BTCPay-Sig', 'valid_signature');
 
         $response = $controller->handle($request);
@@ -1262,7 +1266,7 @@ describe('BTCPayWebhookController payload validation integration', function () {
 
         $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-        $request = new \Illuminate\Http\Request;
+        $request = new Request;
         $response = $controller->handle($request);
 
         expect($response->getStatusCode())->toBe(400)
@@ -1282,7 +1286,7 @@ describe('BTCPayWebhookController payload validation integration', function () {
 
         $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-        $request = new \Illuminate\Http\Request;
+        $request = new Request;
         $response = $controller->handle($request);
 
         expect($response->getStatusCode())->toBe(400)
@@ -1313,7 +1317,7 @@ describe('BTCPayWebhookController payload validation integration', function () {
         $webhookLogger = new WebhookLogger;
         $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-        $request = new \Illuminate\Http\Request;
+        $request = new Request;
         $response = $controller->handle($request);
 
         expect($response->getStatusCode())->toBe(200);
@@ -1388,7 +1392,7 @@ describe('Webhook Idempotency (Replay Attack Protection)', function () {
             $webhookLogger = new WebhookLogger;
             $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-            $request = new \Illuminate\Http\Request;
+            $request = new Request;
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200)
@@ -1423,7 +1427,7 @@ describe('Webhook Idempotency (Replay Attack Protection)', function () {
             $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
             // First request - should process
-            $request1 = new \Illuminate\Http\Request;
+            $request1 = new Request;
             $response1 = $controller->handle($request1);
             expect($response1->getStatusCode())->toBe(200);
 
@@ -1437,7 +1441,7 @@ describe('Webhook Idempotency (Replay Attack Protection)', function () {
             // Second request with same event ID - should be rejected as duplicate
             $webhookLogger2 = new WebhookLogger;
             $controller2 = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger2);
-            $request2 = new \Illuminate\Http\Request;
+            $request2 = new Request;
             $response2 = $controller2->handle($request2);
 
             expect($response2->getStatusCode())->toBe(200)
@@ -1517,7 +1521,7 @@ describe('Webhook Idempotency (Replay Attack Protection)', function () {
                 $webhookLogger
             );
 
-            $request = new \Illuminate\Http\Request;
+            $request = new Request;
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200)
@@ -1574,7 +1578,7 @@ describe('BTCPay Payment Amount Verification', function () {
         $webhookLogger = new WebhookLogger;
         $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-        $request = new \Illuminate\Http\Request;
+        $request = new Request;
         $response = $controller->handle($request);
 
         expect($response->getStatusCode())->toBe(200);
@@ -1610,7 +1614,7 @@ describe('BTCPay Payment Amount Verification', function () {
         $webhookLogger = new WebhookLogger;
         $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-        $request = new \Illuminate\Http\Request;
+        $request = new Request;
         $response = $controller->handle($request);
 
         expect($response->getStatusCode())->toBe(200)
@@ -1653,7 +1657,7 @@ describe('BTCPay Payment Amount Verification', function () {
         $webhookLogger = new WebhookLogger;
         $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-        $request = new \Illuminate\Http\Request;
+        $request = new Request;
         $response = $controller->handle($request);
 
         expect($response->getStatusCode())->toBe(200);
@@ -1690,7 +1694,7 @@ describe('BTCPay Payment Amount Verification', function () {
         $webhookLogger = new WebhookLogger;
         $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-        $request = new \Illuminate\Http\Request;
+        $request = new Request;
         $response = $controller->handle($request);
 
         expect($response->getStatusCode())->toBe(200)
@@ -1727,7 +1731,7 @@ describe('BTCPay Payment Amount Verification', function () {
         $webhookLogger = new WebhookLogger;
         $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-        $request = new \Illuminate\Http\Request;
+        $request = new Request;
         $response = $controller->handle($request);
 
         expect($response->getStatusCode())->toBe(200);

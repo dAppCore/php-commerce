@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 return [
 
     /*
@@ -230,9 +232,8 @@ return [
     'dunning' => [
         'enabled' => true,
 
-        // Exponential backoff: days after initial failure to schedule each retry
-        // [1, 3, 7] = retry at day 1, day 3, day 7 (total ~11 days of retries)
-        'retry_days' => [1, 3, 7],
+        // Escalating backoff: retry at 1, 3, 7, and 14 days, then cancel.
+        'retry_days' => [1, 3, 7, 14],
 
         // Days after subscription paused to suspend workspace entitlements
         // Paused = billing stopped but workspace accessible
@@ -241,7 +242,7 @@ return [
 
         // Days after subscription paused to cancel entirely
         // After cancellation, workspace may be downgraded to free tier
-        'cancel_after_days' => 30,
+        'cancel_after_days' => 14,
 
         // Grace period before first retry (hours)
         // Gives customer time to fix payment method before automated retries

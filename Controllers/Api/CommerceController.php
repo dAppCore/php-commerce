@@ -7,12 +7,15 @@ namespace Core\Mod\Commerce\Controllers\Api;
 use Core\Front\Controller;
 use Core\Mod\Commerce\Models\Invoice;
 use Core\Mod\Commerce\Models\Order;
+use Core\Mod\Commerce\Models\PaymentMethod;
 use Core\Mod\Commerce\Models\Subscription;
 use Core\Mod\Commerce\Services\CommerceService;
 use Core\Mod\Commerce\Services\InvoiceService;
 use Core\Mod\Commerce\Services\SubscriptionService;
 use Core\Tenant\Models\Package;
+use Core\Tenant\Models\User;
 use Core\Tenant\Models\Workspace;
+use Core\Tenant\Services\EntitlementService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -38,7 +41,7 @@ class CommerceController extends Controller
     {
         $user = Auth::user();
 
-        if (! $user instanceof \Core\Tenant\Models\User) {
+        if (! $user instanceof User) {
             return null;
         }
 
@@ -48,6 +51,82 @@ class CommerceController extends Controller
         }
 
         return $user->defaultHostWorkspace();
+    }
+
+    public function checkout(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'items' => 'required|array|min:1',
+            'payment_method_id' => 'required|string',
+            'coupon_code' => 'nullable|string',
+            'currency' => 'nullable|string|size:3',
+        ]);
+
+        $workspace = $this->getWorkspace($request);
+
+        if (! $workspace) {
+            return response()->json(['error' => 'No workspace found'], 404);
+        }
+
+        if (! method_exists($this->commerceService, 'processCheckout')) {
+            return response()->json([
+                'error' => 'checkout_unavailable',
+                'message' => 'Checkout orchestration is not available for this frontage.',
+            ], 501);
+        }
+
+        $result = $this->commerceService->processCheckout(
+            $workspace->id,
+            $validated['items'],
+            $validated['payment_method_id'] ?? '',
+            $validated['coupon_code'] ?? null
+        );
+
+        return response()->json(['data' => $result]);
+    }
+
+    public function checkoutStatus(Request $request, string $id): JsonResponse
+    {
+        $workspace = $this->getWorkspace($request);
+        $order = Order::query()
+            ->where('id', $id)
+            ->orWhere('order_number', $id)
+            ->first();
+
+        if (! $workspace || ! $order || $order->workspace_id !== $workspace->id) {
+            return response()->json(['error' => 'Not found'], 404);
+        }
+
+        return response()->json([
+            'data' => [
+                'id' => $order->id,
+                'order_number' => $order->order_number,
+                'status' => $order->status,
+                'total' => $order->total,
+                'currency' => $order->currency,
+            ],
+        ]);
+    }
+
+    public function confirmCheckout(Request $request, string $id): JsonResponse
+    {
+        $workspace = $this->getWorkspace($request);
+        $order = Order::query()
+            ->where('id', $id)
+            ->orWhere('order_number', $id)
+            ->first();
+
+        if (! $workspace || ! $order || $order->workspace_id !== $workspace->id) {
+            return response()->json(['error' => 'Not found'], 404);
+        }
+
+        return response()->json([
+            'data' => [
+                'id' => $order->id,
+                'status' => $order->status,
+                'paid' => $order->isPaid(),
+            ],
+        ]);
     }
 
     /**
@@ -187,6 +266,136 @@ class CommerceController extends Controller
         ]);
     }
 
+    public function subscriptions(Request $request): JsonResponse
+    {
+        $workspace = $this->getWorkspace($request);
+
+        if (! $workspace) {
+            return response()->json(['error' => 'No workspace found'], 404);
+        }
+
+        return response()->json([
+            'data' => $workspace->subscriptions()
+                ->latest()
+                ->paginate($request->integer('per_page', 25)),
+        ]);
+    }
+
+    public function cancelSubscriptionById(Request $request, Subscription $subscription): JsonResponse
+    {
+        $validated = $request->validate([
+            'immediate' => 'boolean',
+            'reason' => 'nullable|string|max:500',
+        ]);
+
+        $workspace = $this->getWorkspace($request);
+
+        if (! $workspace || $subscription->workspace_id !== $workspace->id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $subscription = $this->subscriptionService->cancel(
+            $subscription,
+            $validated['immediate'] ?? false,
+            $validated['reason'] ?? ''
+        );
+
+        return response()->json(['data' => $subscription]);
+    }
+
+    public function changePlan(Request $request, Subscription $subscription): JsonResponse
+    {
+        $validated = $request->validate([
+            'package_code' => 'required|string|exists:entitlement_packages,code',
+            'prorate' => 'boolean',
+        ]);
+
+        $workspace = $this->getWorkspace($request);
+
+        if (! $workspace || $subscription->workspace_id !== $workspace->id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $newPackage = Package::where('code', $validated['package_code'])->firstOrFail();
+        $result = $this->subscriptionService->changePlan(
+            $subscription,
+            $newPackage,
+            $validated['prorate'] ?? true
+        );
+
+        return response()->json(['data' => $result]);
+    }
+
+    public function paymentMethods(Request $request): JsonResponse
+    {
+        $workspace = $this->getWorkspace($request);
+
+        if (! $workspace) {
+            return response()->json(['error' => 'No workspace found'], 404);
+        }
+
+        return response()->json([
+            'data' => PaymentMethod::query()
+                ->where('workspace_id', $workspace->id)
+                ->where('is_active', true)
+                ->latest()
+                ->get(),
+        ]);
+    }
+
+    public function storePaymentMethod(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'gateway' => 'required|string|max:32',
+            'gateway_payment_method_id' => 'nullable|string|max:255',
+            'type' => 'required|string|max:32',
+            'is_default' => 'boolean',
+        ]);
+
+        $workspace = $this->getWorkspace($request);
+
+        if (! $workspace) {
+            return response()->json(['error' => 'No workspace found'], 404);
+        }
+
+        $method = PaymentMethod::create(array_merge($validated, [
+            'workspace_id' => $workspace->id,
+            'is_active' => true,
+        ]));
+
+        if ($method->is_default) {
+            $method->setAsDefault();
+        }
+
+        return response()->json(['data' => $method], 201);
+    }
+
+    public function deletePaymentMethod(Request $request, PaymentMethod $paymentMethod): JsonResponse
+    {
+        $workspace = $this->getWorkspace($request);
+
+        if (! $workspace || $paymentMethod->workspace_id !== $workspace->id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $paymentMethod->deactivate();
+
+        return response()->json(null, 204);
+    }
+
+    public function setDefaultPaymentMethod(Request $request, PaymentMethod $paymentMethod): JsonResponse
+    {
+        $workspace = $this->getWorkspace($request);
+
+        if (! $workspace || $paymentMethod->workspace_id !== $workspace->id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $paymentMethod->setAsDefault();
+
+        return response()->json(['data' => $paymentMethod->fresh()]);
+    }
+
     /**
      * Get usage summary for the workspace.
      *
@@ -200,7 +409,7 @@ class CommerceController extends Controller
             return response()->json(['error' => 'No workspace found'], 404);
         }
 
-        $entitlements = app(\Core\Tenant\Services\EntitlementService::class);
+        $entitlements = app(EntitlementService::class);
         $summary = $entitlements->getUsageSummary($workspace);
 
         return response()->json([

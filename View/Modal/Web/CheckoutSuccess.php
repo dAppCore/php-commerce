@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\View\Modal\Web;
 
 use Core\Mod\Commerce\Models\Order;
@@ -9,6 +11,7 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
@@ -156,9 +159,9 @@ class CheckoutSuccess extends Component
      */
     protected function generateUniqueSlug(string $name): string
     {
-        $baseSlug = \Illuminate\Support\Str::slug($name);
+        $baseSlug = Str::slug($name);
         if (str_contains($baseSlug, '@')) {
-            $baseSlug = \Illuminate\Support\Str::slug(\Illuminate\Support\Str::before($name, '@'));
+            $baseSlug = Str::slug(Str::before($name, '@'));
         }
 
         $slug = $baseSlug;

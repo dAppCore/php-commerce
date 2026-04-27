@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\Events;
 
 use Core\Mod\Commerce\Models\Subscription;
@@ -12,6 +14,11 @@ class SubscriptionRenewed
 
     public function __construct(
         public Subscription $subscription,
-        public ?\DateTimeInterface $previousPeriodEnd = null
-    ) {}
+        public ?\DateTimeInterface $previousPeriodEnd = null,
+        public ?int $invoiceId = null,
+    ) {
+        $this->subscriptionId = (int) $subscription->id;
+    }
+
+    public int $subscriptionId;
 }

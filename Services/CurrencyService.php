@@ -214,6 +214,24 @@ class CurrencyService
         return ExchangeRate::convert($amount, $from, $to);
     }
 
+    public function rate(string $from, string $to): float
+    {
+        return (float) ($this->getExchangeRate($from, $to) ?? 1.0);
+    }
+
+    /**
+     * @return array<string, array>
+     */
+    public function supported(): array
+    {
+        return $this->getSupportedCurrencies();
+    }
+
+    public function refresh(): void
+    {
+        $this->refreshExchangeRates();
+    }
+
     /**
      * Convert cents between currencies.
      */

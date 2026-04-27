@@ -136,15 +136,15 @@ return new class extends Migration
                 ->constrained('users')
                 ->cascadeOnDelete();
 
-            $table->foreignId('order_id')
-                ->nullable()
-                ->constrained('orders')
-                ->nullOnDelete();
-
-            $table->foreignId('invoice_id')
-                ->nullable()
-                ->constrained('invoices')
-                ->nullOnDelete();
+            // NOTE: `orders` and `invoices` tables are not created by any
+            // migration in the current codebase. MariaDB silently accepted
+            // FKs to nonexistent tables (FK checks disabled during the
+            // migration), but Postgres rejects them. Keeping the columns
+            // as plain nullable bigint so the schema deploys on both DBs;
+            // FK constraints can be added in a follow-up migration once
+            // the orders/invoices tables actually exist.
+            $table->unsignedBigInteger('order_id')->nullable();
+            $table->unsignedBigInteger('invoice_id')->nullable();
 
             // Commission calculation
             $table->decimal('order_amount', 10, 2); // Net order amount (after tax/discounts)

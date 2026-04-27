@@ -1,8 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\Models;
 
+use Carbon\Carbon;
 use Core\Mod\Commerce\Contracts\Orderable;
+use Core\Mod\Commerce\Database\Factories\CouponFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -27,8 +31,8 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property int $used_count
  * @property string $duration
  * @property int|null $duration_months
- * @property \Carbon\Carbon|null $valid_from
- * @property \Carbon\Carbon|null $valid_until
+ * @property Carbon|null $valid_from
+ * @property Carbon|null $valid_until
  * @property bool $is_active
  */
 class Coupon extends Model
@@ -36,9 +40,9 @@ class Coupon extends Model
     use HasFactory;
     use LogsActivity;
 
-    protected static function newFactory(): \Core\Mod\Commerce\Database\Factories\CouponFactory
+    protected static function newFactory(): CouponFactory
     {
-        return \Core\Mod\Commerce\Database\Factories\CouponFactory::new();
+        return CouponFactory::new();
     }
 
     protected $fillable = [

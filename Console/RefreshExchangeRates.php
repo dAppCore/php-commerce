@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Core\Mod\Commerce\Console;
 
+use Core\Mod\Commerce\Models\ExchangeRate;
 use Core\Mod\Commerce\Services\CurrencyService;
 use Illuminate\Console\Command;
 
@@ -14,7 +15,7 @@ use Illuminate\Console\Command;
  */
 class RefreshExchangeRates extends Command
 {
-    protected $signature = 'commerce:refresh-exchange-rates
+    protected $signature = 'commerce:exchange-rates
                             {--force : Force refresh even if rates are fresh}';
 
     protected $description = 'Refresh exchange rates from the configured provider';
@@ -30,7 +31,7 @@ class RefreshExchangeRates extends Command
         $this->line("Provider: {$provider}");
 
         // Check if rates need refresh
-        if (! $this->option('force') && ! \Core\Mod\Commerce\Models\ExchangeRate::needsRefresh()) {
+        if (! $this->option('force') && ! ExchangeRate::needsRefresh()) {
             $this->info('Rates are still fresh. Use --force to refresh anyway.');
 
             return self::SUCCESS;

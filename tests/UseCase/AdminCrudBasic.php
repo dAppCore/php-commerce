@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * UseCase: Commerce Admin CRUD (Basic Flow)
  *

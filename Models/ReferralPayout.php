@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Core\Mod\Commerce\Models;
 
+use Carbon\Carbon;
 use Core\Tenant\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,10 +28,10 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property float|null $btc_amount
  * @property float|null $btc_rate
  * @property string $status
- * @property \Carbon\Carbon|null $requested_at
- * @property \Carbon\Carbon|null $processed_at
- * @property \Carbon\Carbon|null $completed_at
- * @property \Carbon\Carbon|null $failed_at
+ * @property Carbon|null $requested_at
+ * @property Carbon|null $processed_at
+ * @property Carbon|null $completed_at
+ * @property Carbon|null $failed_at
  * @property string|null $notes
  * @property string|null $failure_reason
  * @property int|null $processed_by

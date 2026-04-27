@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\Models;
 
+use Carbon\Carbon;
 use Core\Tenant\Models\User;
 use Core\Tenant\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -88,7 +91,7 @@ class PaymentMethod extends Model
             return false;
         }
 
-        $expiry = \Carbon\Carbon::createFromDate($this->exp_year, $this->exp_month)->endOfMonth();
+        $expiry = Carbon::createFromDate($this->exp_year, $this->exp_month)->endOfMonth();
 
         return $expiry->isPast();
     }

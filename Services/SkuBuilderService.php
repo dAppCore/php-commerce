@@ -23,8 +23,26 @@ class SkuBuilderService
      *
      * @param  array<array{base_sku: string, options?: array, bundle_group?: string|int}>  $lineItems
      */
-    public function build(array $lineItems): string
+    public function build(array|string $lineItems, ?string $baseSku = null, array $options = []): string
     {
+        if (is_string($lineItems)) {
+            $prefix = strtoupper(trim($lineItems, '-'));
+            $sku = strtoupper((string) $baseSku);
+
+            foreach ($options as $key => $value) {
+                if (is_array($value)) {
+                    $key = $value['key'] ?? $value['code'] ?? $key;
+                    $value = $value['value'] ?? '';
+                }
+
+                if ($value !== '') {
+                    $sku .= '-'.strtoupper((string) $key).strtoupper((string) $value);
+                }
+            }
+
+            return $prefix === '' ? $sku : "{$prefix}-{$sku}";
+        }
+
         if (empty($lineItems)) {
             return '';
         }

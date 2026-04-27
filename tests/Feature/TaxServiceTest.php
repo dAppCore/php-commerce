@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 use Core\Mod\Commerce\Models\TaxRate;
 use Core\Mod\Commerce\Services\TaxService;
 use Core\Tenant\Models\Workspace;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->workspace = Workspace::factory()->create([

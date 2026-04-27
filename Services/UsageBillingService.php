@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\Services;
 
 use Carbon\Carbon;
@@ -15,6 +17,7 @@ use Core\Tenant\Models\Workspace;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Stripe\StripeClient;
 
 /**
  * Usage-based billing service.
@@ -331,7 +334,7 @@ class UsageBillingService
         Subscription $subscription,
         SubscriptionUsage $usage
     ): void {
-        $stripe = new \Stripe\StripeClient(config('commerce.gateways.stripe.secret'));
+        $stripe = new StripeClient(config('commerce.gateways.stripe.secret'));
 
         // Find the subscription item for this price
         $stripeSubscription = $stripe->subscriptions->retrieve(
@@ -417,7 +420,7 @@ class UsageBillingService
             return null;
         }
 
-        $stripe = new \Stripe\StripeClient($secret);
+        $stripe = new StripeClient($secret);
 
         // Create or update product in Stripe
         $product = $stripe->products->create([

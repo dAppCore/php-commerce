@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Core\Mod\Commerce\Services;
 
 use Core\Mod\Commerce\Contracts\Orderable;
+use Core\Mod\Commerce\Contracts\PaymentGatewayContract as RfcPaymentGatewayContract;
 use Core\Mod\Commerce\Data\FraudAssessment;
+use Core\Mod\Commerce\Events\OrderPaid;
 use Core\Mod\Commerce\Exceptions\CheckoutRateLimitException;
 use Core\Mod\Commerce\Exceptions\FraudBlockedException;
 use Core\Mod\Commerce\Models\Coupon;
@@ -13,9 +15,14 @@ use Core\Mod\Commerce\Models\Invoice;
 use Core\Mod\Commerce\Models\Order;
 use Core\Mod\Commerce\Models\OrderItem;
 use Core\Mod\Commerce\Models\Payment;
+use Core\Mod\Commerce\Models\PaymentMethod;
+use Core\Mod\Commerce\Models\Product;
+use Core\Mod\Commerce\Models\Refund;
 use Core\Mod\Commerce\Models\Subscription;
 use Core\Mod\Commerce\Services\PaymentGateway\PaymentGatewayContract;
+use Core\Tenant\Models\Boost;
 use Core\Tenant\Models\Package;
+use Core\Tenant\Models\User;
 use Core\Tenant\Models\Workspace;
 use Core\Tenant\Services\EntitlementService;
 use Illuminate\Database\Eloquent\Model;
@@ -123,7 +130,7 @@ class CommerceService
             $order = Order::create([
                 'orderable_type' => get_class($orderable),
                 'orderable_id' => $orderable->id,
-                'user_id' => $orderable instanceof \Core\Tenant\Models\User ? $orderable->id : null,
+                'user_id' => $orderable instanceof User ? $orderable->id : null,
                 'order_number' => Order::generateOrderNumber(),
                 'status' => 'pending',
                 'billing_cycle' => $billingCycle,
@@ -245,6 +252,120 @@ class CommerceService
     }
 
     /**
+     * RFC checkout entrypoint for an existing order and stored payment method.
+     *
+     * @return array{order: Order, payment: Payment, gateway_session: array<string, mixed>}
+     */
+    public function checkout(Order $order, PaymentMethod $paymentMethod): array
+    {
+        $payment = Payment::create([
+            'workspace_id' => $order->workspace_id,
+            'order_id' => $order->id,
+            'payment_method_id' => $paymentMethod->id,
+            'gateway' => $paymentMethod->gateway,
+            'amount' => $order->total,
+            'currency' => $order->currency,
+            'status' => 'pending',
+        ]);
+
+        $gateway = app()->bound("commerce.rfc_gateway.{$paymentMethod->gateway}")
+            ? app("commerce.rfc_gateway.{$paymentMethod->gateway}")
+            : app(RfcPaymentGatewayContract::class);
+
+        $gatewaySession = $gateway->createSession($order, $paymentMethod);
+
+        return [
+            'order' => $order->fresh(),
+            'payment' => $payment,
+            'gateway_session' => $gatewaySession,
+        ];
+    }
+
+    public function confirmPayment(Payment $payment, string $gatewayTransactionId): void
+    {
+        $payment->update([
+            'gateway_payment_id' => $gatewayTransactionId,
+            'status' => 'succeeded',
+            'paid_at' => now(),
+        ]);
+
+        $order = Order::find($payment->order_id);
+
+        if ($order && ! $order->isPaid()) {
+            $this->fulfillOrder($order, $payment->fresh());
+        }
+    }
+
+    /**
+     * RFC full checkout flow for cart-style product items.
+     *
+     * @param  array<int, array{product_id?: int, quantity?: int}>  $cartItems
+     * @return array{order: Order, payment: Payment, gateway_session: array<string, mixed>}
+     */
+    public function processCheckout(
+        int $workspaceId,
+        array $cartItems,
+        string $paymentMethodId,
+        ?string $couponCode = null
+    ): array {
+        $workspace = Workspace::findOrFail($workspaceId);
+        $paymentMethod = PaymentMethod::findOrFail($paymentMethodId);
+        $currency = config('commerce.currency', 'GBP');
+
+        $order = DB::transaction(function () use ($workspace, $cartItems, $currency, $couponCode): Order {
+            $order = Order::create([
+                'orderable_type' => Workspace::class,
+                'orderable_id' => $workspace->id,
+                'user_id' => null,
+                'order_number' => Order::generateOrderNumber(),
+                'status' => 'pending',
+                'type' => 'checkout',
+                'currency' => $currency,
+                'subtotal' => 0,
+                'tax_amount' => 0,
+                'discount_amount' => 0,
+                'total' => 0,
+                'billing_name' => $workspace->billing_name ?? $workspace->name,
+                'billing_email' => $workspace->billing_email ?? $workspace->owner()?->email,
+                'billing_address' => method_exists($workspace, 'getBillingAddress') ? $workspace->getBillingAddress() : null,
+                'metadata' => ['coupon_code' => $couponCode],
+            ]);
+
+            $subtotal = 0.0;
+
+            foreach ($cartItems as $item) {
+                $product = Product::findOrFail((int) ($item['product_id'] ?? 0));
+                $quantity = max(1, (int) ($item['quantity'] ?? 1));
+                $unitPrice = $this->productUnitPrice($product);
+                $lineTotal = round($unitPrice * $quantity, 2);
+                $subtotal += $lineTotal;
+
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $product->id,
+                    'item_type' => 'product',
+                    'item_id' => $product->id,
+                    'item_code' => $product->sku,
+                    'description' => $product->name,
+                    'quantity' => $quantity,
+                    'unit_price' => $unitPrice,
+                    'line_total' => $lineTotal,
+                    'billing_cycle' => $product->isSubscription() ? 'monthly' : 'onetime',
+                ]);
+            }
+
+            $order->update([
+                'subtotal' => $subtotal,
+                'total' => $subtotal,
+            ]);
+
+            return $order->fresh(['items']);
+        });
+
+        return $this->checkout($order, $paymentMethod);
+    }
+
+    /**
      * Assess order for fraud before checkout.
      *
      * Performs velocity checks and geo-anomaly detection. If the fraud risk
@@ -361,7 +482,7 @@ class CommerceService
             $order = Order::create([
                 'orderable_type' => get_class($orderable),
                 'orderable_id' => $orderable->id,
-                'user_id' => $orderable instanceof \Core\Tenant\Models\User ? $orderable->id : null,
+                'user_id' => $orderable instanceof User ? $orderable->id : null,
                 'order_number' => Order::generateOrderNumber(),
                 'status' => 'pending',
                 'billing_cycle' => 'onetime',
@@ -437,7 +558,7 @@ class CommerceService
             }
 
             // Provision boosts for user-level orders
-            if ($order->orderable instanceof \Core\Tenant\Models\User) {
+            if ($order->orderable instanceof User) {
                 foreach ($order->items as $item) {
                     if ($item->item_type === 'boost') {
                         $quantity = $item->metadata['quantity'] ?? $item->quantity ?? 1;
@@ -450,28 +571,28 @@ class CommerceService
             }
 
             // Dispatch OrderPaid event for referral tracking and other listeners
-            event(new \Core\Mod\Commerce\Events\OrderPaid($order, $payment));
+            event(new OrderPaid($order, $payment));
         });
     }
 
     /**
      * Provision a boost for a user.
      */
-    public function provisionBoostForUser(\Core\Tenant\Models\User $user, string $featureCode, int $quantity = 1, array $metadata = []): \Core\Tenant\Models\Boost
+    public function provisionBoostForUser(User $user, string $featureCode, int $quantity = 1, array $metadata = []): Boost
     {
         // Use ADD_LIMIT for quantity-based boosts, ENABLE for boolean boosts
         $boostType = $quantity > 1 || $this->isQuantityBasedFeature($featureCode)
-            ? \Core\Tenant\Models\Boost::BOOST_TYPE_ADD_LIMIT
-            : \Core\Tenant\Models\Boost::BOOST_TYPE_ENABLE;
+            ? Boost::BOOST_TYPE_ADD_LIMIT
+            : Boost::BOOST_TYPE_ENABLE;
 
-        return \Core\Tenant\Models\Boost::create([
+        return Boost::create([
             'user_id' => $user->id,
             'workspace_id' => null,
             'feature_code' => $featureCode,
             'boost_type' => $boostType,
-            'duration_type' => \Core\Tenant\Models\Boost::DURATION_PERMANENT,
-            'limit_value' => $boostType === \Core\Tenant\Models\Boost::BOOST_TYPE_ADD_LIMIT ? $quantity : null,
-            'status' => \Core\Tenant\Models\Boost::STATUS_ACTIVE,
+            'duration_type' => Boost::DURATION_PERMANENT,
+            'limit_value' => $boostType === Boost::BOOST_TYPE_ADD_LIMIT ? $quantity : null,
+            'status' => Boost::STATUS_ACTIVE,
             'starts_at' => now(),
             'metadata' => $metadata,
         ]);
@@ -599,7 +720,7 @@ class CommerceService
         Payment $payment,
         ?float $amount = null,
         ?string $reason = null
-    ): \Core\Mod\Commerce\Models\Refund {
+    ): Refund {
         $amountCents = $amount
             ? (int) ($amount * 100)
             : (int) (($payment->amount - $payment->amount_refunded) * 100);
@@ -660,7 +781,7 @@ class CommerceService
             // For BTCPay, payment will be 'pending' as it requires customer action
             // This is expected - automatic retry won't work for crypto payments
             if ($payment->status === 'pending' && $paymentMethod->gateway === 'btcpay') {
-                \Illuminate\Support\Facades\Log::info('BTCPay invoice created for retry - requires customer payment', [
+                Log::info('BTCPay invoice created for retry - requires customer payment', [
                     'invoice_id' => $invoice->id,
                     'payment_id' => $payment->id,
                 ]);
@@ -668,7 +789,7 @@ class CommerceService
 
             return false;
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Invoice payment retry failed', [
+            Log::error('Invoice payment retry failed', [
                 'invoice_id' => $invoice->id,
                 'error' => $e->getMessage(),
             ]);
@@ -732,5 +853,22 @@ class CommerceService
     public function convertCurrency(float $amount, string $from, string $to): ?float
     {
         return $this->currencyService->convert($amount, $from, $to);
+    }
+
+    protected function productUnitPrice(Product $product): float
+    {
+        $price = $product->prices()
+            ->where('currency', config('commerce.currency', 'GBP'))
+            ->first();
+
+        if ($price) {
+            return $price->amount / 100;
+        }
+
+        if (isset($product->price)) {
+            return ((int) $product->price) / 100;
+        }
+
+        return (float) ($product->base_price ?? 0);
     }
 }

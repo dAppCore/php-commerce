@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\Models;
 
+use Carbon\Carbon;
 use Core\Tenant\Models\User;
 use Core\Tenant\Models\Workspace;
 use Illuminate\Database\Eloquent\Model;
@@ -16,7 +19,7 @@ use Illuminate\Support\Str;
  * @property int $meter_id
  * @property int $workspace_id
  * @property int $quantity
- * @property \Carbon\Carbon $event_at
+ * @property Carbon $event_at
  * @property string|null $idempotency_key
  * @property int|null $user_id
  * @property string|null $action

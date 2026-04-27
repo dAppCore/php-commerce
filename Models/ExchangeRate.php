@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Core\Mod\Commerce\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 
@@ -15,7 +16,7 @@ use Illuminate\Support\Facades\Cache;
  * @property string $target_currency
  * @property float $rate
  * @property string $source
- * @property \Carbon\Carbon $fetched_at
+ * @property Carbon $fetched_at
  */
 class ExchangeRate extends Model
 {

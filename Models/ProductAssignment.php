@@ -42,6 +42,7 @@ class ProductAssignment extends Model
 
     protected $fillable = [
         'entity_id',
+        'entity_type',
         'product_id',
         'sku_suffix',
         'price_override',

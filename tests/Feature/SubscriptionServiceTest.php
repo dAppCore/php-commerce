@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Carbon\Carbon;
 use Core\Mod\Commerce\Exceptions\PauseLimitExceededException;
 use Core\Mod\Commerce\Models\Subscription;
@@ -10,9 +12,10 @@ use Core\Tenant\Models\Package;
 use Core\Tenant\Models\User;
 use Core\Tenant\Models\Workspace;
 use Core\Tenant\Models\WorkspacePackage;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
 beforeEach(function () {
     Cache::flush();
@@ -462,7 +465,7 @@ describe('Proration calculations', function () {
             $this->subscription->workspacePackage->setRelation('package', null);
 
             expect(fn () => $this->service->previewPlanChange($this->subscription, $this->agencyPackage))
-                ->toThrow(\InvalidArgumentException::class, 'no current package');
+                ->toThrow(InvalidArgumentException::class, 'no current package');
         });
     });
 

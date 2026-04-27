@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Core\Mod\Commerce\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -23,7 +24,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property bool $locked
  * @property string $source
  * @property int|null $set_by_entity_id
- * @property \Carbon\Carbon|null $trained_at
+ * @property Carbon|null $trained_at
  * @property string|null $trained_route
  */
 class PermissionMatrix extends Model
@@ -39,8 +40,10 @@ class PermissionMatrix extends Model
 
     protected $fillable = [
         'entity_id',
+        'target_entity_id',
         'key',
         'scope',
+        'permissions',
         'allowed',
         'locked',
         'source',
@@ -51,6 +54,7 @@ class PermissionMatrix extends Model
 
     protected $casts = [
         'allowed' => 'boolean',
+        'permissions' => 'array',
         'locked' => 'boolean',
         'trained_at' => 'datetime',
     ];
@@ -60,6 +64,11 @@ class PermissionMatrix extends Model
     public function entity(): BelongsTo
     {
         return $this->belongsTo(Entity::class, 'entity_id');
+    }
+
+    public function targetEntity(): BelongsTo
+    {
+        return $this->belongsTo(Entity::class, 'target_entity_id');
     }
 
     public function setByEntity(): BelongsTo

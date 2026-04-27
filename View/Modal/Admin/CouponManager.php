@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Core\Mod\Commerce\View\Modal\Admin;
 
+use Carbon\Carbon;
 use Core\Mod\Commerce\Models\Coupon;
 use Core\Mod\Commerce\Services\CouponService;
 use Core\Tenant\Models\Package;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -334,8 +336,8 @@ class CouponManager extends Component
             'max_uses_per_workspace' => $this->bulk_max_uses_per_workspace,
             'duration' => $this->bulk_duration,
             'duration_months' => $this->bulk_duration === 'repeating' ? $this->bulk_duration_months : null,
-            'valid_from' => $this->bulk_valid_from ? \Carbon\Carbon::parse($this->bulk_valid_from) : null,
-            'valid_until' => $this->bulk_valid_until ? \Carbon\Carbon::parse($this->bulk_valid_until) : null,
+            'valid_from' => $this->bulk_valid_from ? Carbon::parse($this->bulk_valid_from) : null,
+            'valid_until' => $this->bulk_valid_until ? Carbon::parse($this->bulk_valid_until) : null,
             'is_active' => $this->bulk_is_active,
         ];
 
@@ -399,8 +401,8 @@ class CouponManager extends Component
             'max_uses_per_workspace' => $this->max_uses_per_workspace,
             'duration' => $this->duration,
             'duration_months' => $this->duration === 'repeating' ? $this->duration_months : null,
-            'valid_from' => $this->valid_from ? \Carbon\Carbon::parse($this->valid_from) : null,
-            'valid_until' => $this->valid_until ? \Carbon\Carbon::parse($this->valid_until) : null,
+            'valid_from' => $this->valid_from ? Carbon::parse($this->valid_from) : null,
+            'valid_until' => $this->valid_until ? Carbon::parse($this->valid_until) : null,
             'is_active' => $this->is_active,
         ];
 
@@ -587,7 +589,7 @@ class CouponManager extends Component
                 [
                     'lines' => array_filter([
                         ['bold' => $c->name],
-                        $c->description ? ['muted' => \Illuminate\Support\Str::limit($c->description, 30)] : null,
+                        $c->description ? ['muted' => Str::limit($c->description, 30)] : null,
                     ]),
                 ],
                 ['lines' => $discountLines],

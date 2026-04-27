@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\Mcp\Tools;
 
+use Carbon\Carbon;
 use Core\Mod\Commerce\Models\Coupon;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
@@ -59,7 +62,7 @@ class CreateCoupon extends Tool
                 'duration' => $duration,
                 'max_uses' => $maxUses,
                 'max_uses_per_workspace' => 1,
-                'valid_until' => $validUntil ? \Carbon\Carbon::parse($validUntil) : null,
+                'valid_until' => $validUntil ? Carbon::parse($validUntil) : null,
                 'is_active' => true,
                 'applies_to' => 'all',
             ]);

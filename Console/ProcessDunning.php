@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\Console;
 
+use Core\Mod\Commerce\Models\Subscription;
 use Core\Mod\Commerce\Services\DunningService;
 use Core\Mod\Commerce\Services\SubscriptionService;
 use Illuminate\Console\Command;
@@ -9,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 
 class ProcessDunning extends Command
 {
-    protected $signature = 'commerce:process-dunning
+    protected $signature = 'commerce:dunning
                             {--dry-run : Show what would happen without making changes}
                             {--stage= : Process only a specific stage (retry, pause, suspend, cancel, expire)}';
 
@@ -269,7 +272,7 @@ class ProcessDunning extends Command
         $this->info('Stage 5: Expired Subscriptions');
 
         if ($dryRun) {
-            $count = \Core\Mod\Commerce\Models\Subscription::query()
+            $count = Subscription::query()
                 ->active()
                 ->whereNotNull('cancelled_at')
                 ->where('current_period_end', '<=', now())

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Core\Mod\Commerce\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -20,8 +21,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int|null $low_stock_threshold
  * @property string|null $bin_location
  * @property string|null $zone
- * @property \Carbon\Carbon|null $last_counted_at
- * @property \Carbon\Carbon|null $last_restocked_at
+ * @property Carbon|null $last_counted_at
+ * @property Carbon|null $last_restocked_at
  * @property int|null $unit_cost
  * @property array|null $metadata
  */

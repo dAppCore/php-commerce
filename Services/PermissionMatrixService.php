@@ -102,20 +102,11 @@ class PermissionMatrixService
             $this->logRequest($request, $entity, $action, $scope, $result);
         }
 
-        // Training mode: undefined permissions become pending for approval
+        // Training mode records undefined permissions and allows the request.
         if ($result->isUndefined() && $this->trainingMode) {
-            // Log as pending
             PermissionRequest::fromRequest($entity, $action, PermissionRequest::STATUS_PENDING, $scope);
 
-            return PermissionResult::pending(
-                key: $action,
-                scope: $scope,
-                trainingUrl: route('commerce.matrix.train', [
-                    'entity' => $entity->id,
-                    'key' => $action,
-                    'scope' => $scope,
-                ])
-            );
+            return PermissionResult::allowed();
         }
 
         // Production mode (strict): undefined = denied
@@ -135,6 +126,139 @@ class PermissionMatrixService
         }
 
         return $result;
+    }
+
+    public function check(Entity $entity, Entity $target, string $permission): \Core\Mod\Commerce\DTOs\PermissionResult
+    {
+        $matrix = PermissionMatrix::query()
+            ->where('entity_id', $entity->id)
+            ->where('target_entity_id', $target->id)
+            ->where(function ($query) use ($permission): void {
+                $query->where('key', $permission)
+                    ->orWhereJsonContains('permissions', $permission);
+            })
+            ->first();
+
+        if ($this->trainingMode && ! $matrix) {
+            PermissionRequest::create([
+                'entity_id' => $entity->id,
+                'from_entity_id' => $entity->id,
+                'to_entity_id' => $target->id,
+                'method' => request()->method(),
+                'route' => request()->path(),
+                'action' => $permission,
+                'permissions' => [$permission],
+                'request_data' => request()->except([
+                    'password',
+                    'password_confirmation',
+                    'token',
+                    'api_key',
+                    'secret',
+                    'credit_card',
+                    'card_number',
+                    'cvv',
+                    'ssn',
+                ]),
+                'user_agent' => request()->userAgent(),
+                'ip_address' => request()->ip(),
+                'user_id' => auth()->id(),
+                'status' => PermissionRequest::STATUS_PENDING,
+            ]);
+
+            return new \Core\Mod\Commerce\DTOs\PermissionResult(true, 'training', [$permission]);
+        }
+
+        if (! $matrix) {
+            return new \Core\Mod\Commerce\DTOs\PermissionResult(false, "No permission defined for {$permission}", []);
+        }
+
+        if (! $matrix->allowed) {
+            return new \Core\Mod\Commerce\DTOs\PermissionResult(false, 'Permission denied', []);
+        }
+
+        $permissions = $matrix->permissions ?: [$matrix->key];
+
+        return new \Core\Mod\Commerce\DTOs\PermissionResult(true, null, $permissions);
+    }
+
+    public function grant(Entity $entity, Entity $target, array $permissions): PermissionMatrix
+    {
+        $this->assertCanGrant($entity, $target);
+
+        return PermissionMatrix::updateOrCreate(
+            [
+                'entity_id' => $entity->id,
+                'target_entity_id' => $target->id,
+                'key' => 'matrix.grant',
+                'scope' => (string) $target->id,
+            ],
+            [
+                'permissions' => array_values($permissions),
+                'allowed' => true,
+                'locked' => false,
+                'source' => PermissionMatrix::SOURCE_EXPLICIT,
+                'set_by_entity_id' => $entity->id,
+            ]
+        );
+    }
+
+    public function revoke(Entity $entity, Entity $target, array $permissions): void
+    {
+        $matrix = PermissionMatrix::query()
+            ->where('entity_id', $entity->id)
+            ->where('target_entity_id', $target->id)
+            ->first();
+
+        if (! $matrix) {
+            return;
+        }
+
+        $remaining = array_values(array_diff($matrix->permissions ?? [], $permissions));
+
+        if ($remaining === []) {
+            $matrix->delete();
+
+            return;
+        }
+
+        $matrix->update(['permissions' => $remaining]);
+    }
+
+    public function approveRequest(PermissionRequest $request): void
+    {
+        $request->update([
+            'status' => PermissionRequest::STATUS_ALLOWED,
+            'was_trained' => true,
+            'trained_at' => now(),
+        ]);
+
+        if ($request->from_entity_id && $request->to_entity_id) {
+            $from = Entity::find($request->from_entity_id);
+            $to = Entity::find($request->to_entity_id);
+
+            if ($from && $to) {
+                $this->grant($from, $to, $request->permissions ?: [$request->action]);
+            }
+        }
+    }
+
+    public function denyRequest(PermissionRequest $request): void
+    {
+        $request->update([
+            'status' => PermissionRequest::STATUS_DENIED,
+            'was_trained' => true,
+            'trained_at' => now(),
+        ]);
+    }
+
+    protected function assertCanGrant(Entity $entity, Entity $target): void
+    {
+        $allowed = ($entity->isM1() && $target->isM2())
+            || ($entity->isM2() && $target->isM3());
+
+        if (! $allowed) {
+            throw new \InvalidArgumentException('Commerce Matrix permissions may only be granted M1 to M2 or M2 to M3.');
+        }
     }
 
     /**

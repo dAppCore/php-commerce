@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\Listeners;
 
 use Core\Mod\Commerce\Events\SubscriptionRenewed;

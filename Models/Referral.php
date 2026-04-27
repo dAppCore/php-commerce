@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Core\Mod\Commerce\Models;
 
+use Carbon\Carbon;
 use Core\Tenant\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -30,13 +31,13 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property string|null $ip_address
  * @property string|null $user_agent
  * @property string|null $tracking_id
- * @property \Carbon\Carbon|null $clicked_at
- * @property \Carbon\Carbon|null $signed_up_at
- * @property \Carbon\Carbon|null $first_purchase_at
- * @property \Carbon\Carbon|null $qualified_at
- * @property \Carbon\Carbon|null $disqualified_at
+ * @property Carbon|null $clicked_at
+ * @property Carbon|null $signed_up_at
+ * @property Carbon|null $first_purchase_at
+ * @property Carbon|null $qualified_at
+ * @property Carbon|null $disqualified_at
  * @property string|null $disqualification_reason
- * @property \Carbon\Carbon|null $matured_at
+ * @property Carbon|null $matured_at
  */
 class Referral extends Model
 {

@@ -20,5 +20,15 @@ class OrderPaid
     public function __construct(
         public Order $order,
         public Payment $payment
-    ) {}
+    ) {
+        $this->orderId = (int) $order->id;
+        $this->paymentId = (int) $payment->id;
+        $this->amount = (float) $payment->amount;
+    }
+
+    public int $orderId;
+
+    public int $paymentId;
+
+    public float $amount;
 }

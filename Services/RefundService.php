@@ -1,11 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\Services;
 
 use Core\Mod\Commerce\Models\Payment;
 use Core\Mod\Commerce\Models\Refund;
 use Core\Mod\Commerce\Notifications\RefundProcessed;
 use Core\Tenant\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -110,6 +113,11 @@ class RefundService
         });
     }
 
+    public function process(Payment $payment, float $amount, string $reason): Refund
+    {
+        return $this->refund($payment, $amount, $reason);
+    }
+
     /**
      * Check if a payment can be refunded.
      */
@@ -160,7 +168,7 @@ class RefundService
     /**
      * Get refund history for a payment.
      */
-    public function getRefundsForPayment(Payment $payment): \Illuminate\Database\Eloquent\Collection
+    public function getRefundsForPayment(Payment $payment): Collection
     {
         return $payment->refunds()->latest()->get();
     }
@@ -168,7 +176,7 @@ class RefundService
     /**
      * Get all refunds for a workspace.
      */
-    public function getRefundsForWorkspace(int $workspaceId): \Illuminate\Database\Eloquent\Collection
+    public function getRefundsForWorkspace(int $workspaceId): Collection
     {
         return Refund::query()
             ->whereHas('payment', function ($query) use ($workspaceId) {

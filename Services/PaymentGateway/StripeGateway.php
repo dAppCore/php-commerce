@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\Services\PaymentGateway;
 
+use Carbon\Carbon;
 use Core\Mod\Commerce\Models\Order;
 use Core\Mod\Commerce\Models\Payment;
 use Core\Mod\Commerce\Models\PaymentMethod;
@@ -9,7 +12,14 @@ use Core\Mod\Commerce\Models\Refund;
 use Core\Mod\Commerce\Models\Subscription;
 use Core\Tenant\Models\Workspace;
 use Illuminate\Support\Facades\Log;
+use Stripe\Exception\ApiConnectionException;
+use Stripe\Exception\ApiErrorException;
+use Stripe\Exception\AuthenticationException;
+use Stripe\Exception\CardException;
+use Stripe\Exception\InvalidRequestException;
+use Stripe\Exception\RateLimitException;
 use Stripe\StripeClient;
+use Stripe\Webhook;
 
 /**
  * Stripe payment gateway implementation.
@@ -143,36 +153,36 @@ class StripeGateway implements PaymentGatewayContract
                 'session_id' => $session->id,
                 'checkout_url' => $session->url,
             ];
-        } catch (\Stripe\Exception\CardException $e) {
+        } catch (CardException $e) {
             Log::warning('Stripe checkout failed: card error', [
                 'order_id' => $order->id,
                 'error' => $e->getMessage(),
                 'code' => $e->getStripeCode(),
             ]);
             throw new \RuntimeException('Payment card error: '.$e->getMessage(), 0, $e);
-        } catch (\Stripe\Exception\RateLimitException $e) {
+        } catch (RateLimitException $e) {
             Log::error('Stripe checkout failed: rate limit', [
                 'order_id' => $order->id,
             ]);
             throw new \RuntimeException('Payment service temporarily unavailable. Please try again.', 0, $e);
-        } catch (\Stripe\Exception\InvalidRequestException $e) {
+        } catch (InvalidRequestException $e) {
             Log::error('Stripe checkout failed: invalid request', [
                 'order_id' => $order->id,
                 'error' => $e->getMessage(),
                 'param' => $e->getStripeParam(),
             ]);
             throw new \RuntimeException('Unable to create checkout session. Please contact support.', 0, $e);
-        } catch (\Stripe\Exception\AuthenticationException $e) {
+        } catch (AuthenticationException $e) {
             Log::critical('Stripe authentication failed - check API keys', [
                 'order_id' => $order->id,
             ]);
             throw new \RuntimeException('Payment service configuration error. Please contact support.', 0, $e);
-        } catch (\Stripe\Exception\ApiConnectionException $e) {
+        } catch (ApiConnectionException $e) {
             Log::error('Stripe checkout failed: connection error', [
                 'order_id' => $order->id,
             ]);
             throw new \RuntimeException('Unable to connect to payment service. Please try again.', 0, $e);
-        } catch (\Stripe\Exception\ApiErrorException $e) {
+        } catch (ApiErrorException $e) {
             Log::error('Stripe checkout failed: API error', [
                 'order_id' => $order->id,
                 'error' => $e->getMessage(),
@@ -338,10 +348,10 @@ class StripeGateway implements PaymentGatewayContract
             'gateway_customer_id' => $customerId,
             'gateway_price_id' => $priceId,
             'status' => $this->mapSubscriptionStatus($stripeSubscription->status),
-            'current_period_start' => \Carbon\Carbon::createFromTimestamp($stripeSubscription->current_period_start),
-            'current_period_end' => \Carbon\Carbon::createFromTimestamp($stripeSubscription->current_period_end),
+            'current_period_start' => Carbon::createFromTimestamp($stripeSubscription->current_period_start),
+            'current_period_end' => Carbon::createFromTimestamp($stripeSubscription->current_period_end),
             'trial_ends_at' => $stripeSubscription->trial_end
-                ? \Carbon\Carbon::createFromTimestamp($stripeSubscription->trial_end)
+                ? Carbon::createFromTimestamp($stripeSubscription->trial_end)
                 : null,
             'metadata' => ['stripe_subscription' => $stripeSubscription->toArray()],
         ]);
@@ -376,8 +386,8 @@ class StripeGateway implements PaymentGatewayContract
             'gateway_price_id' => $options['price_id'] ?? $subscription->gateway_price_id,
             'status' => $this->mapSubscriptionStatus($stripeSubscription->status),
             'cancel_at_period_end' => $stripeSubscription->cancel_at_period_end,
-            'current_period_start' => \Carbon\Carbon::createFromTimestamp($stripeSubscription->current_period_start),
-            'current_period_end' => \Carbon\Carbon::createFromTimestamp($stripeSubscription->current_period_end),
+            'current_period_start' => Carbon::createFromTimestamp($stripeSubscription->current_period_start),
+            'current_period_end' => Carbon::createFromTimestamp($stripeSubscription->current_period_end),
         ]);
 
         return $subscription->fresh();
@@ -544,7 +554,7 @@ class StripeGateway implements PaymentGatewayContract
     public function verifyWebhookSignature(string $payload, string $signature): bool
     {
         try {
-            \Stripe\Webhook::constructEvent($payload, $signature, $this->webhookSecret);
+            Webhook::constructEvent($payload, $signature, $this->webhookSecret);
 
             return true;
         } catch (\Exception $e) {

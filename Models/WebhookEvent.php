@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Core\Mod\Commerce\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -21,8 +22,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $http_status_code
  * @property int|null $order_id
  * @property int|null $subscription_id
- * @property \Carbon\Carbon $received_at
- * @property \Carbon\Carbon|null $processed_at
+ * @property Carbon $received_at
+ * @property Carbon|null $processed_at
  */
 class WebhookEvent extends Model
 {

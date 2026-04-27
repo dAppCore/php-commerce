@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Core\Mod\Commerce\View\Modal\Web;
 
 use Core\Mod\Commerce\Models\Coupon;
@@ -12,9 +14,11 @@ use Core\Mod\Commerce\Services\CurrencyService;
 use Core\Mod\Commerce\Services\TaxService;
 use Core\Tenant\Models\Package;
 use Core\Tenant\Models\Workspace;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -143,7 +147,7 @@ class CheckoutPage extends Component
     /**
      * Handle currency change event from CurrencySelector component.
      */
-    #[\Livewire\Attributes\On('currency-changed')]
+    #[On('currency-changed')]
     public function onCurrencyChanged(string $currency): void
     {
         $this->displayCurrency = $currency;
@@ -181,7 +185,7 @@ class CheckoutPage extends Component
     }
 
     #[Computed]
-    public function packages(): \Illuminate\Database\Eloquent\Collection
+    public function packages(): Collection
     {
         return Package::active()
             ->public()
