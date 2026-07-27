@@ -1,5 +1,5 @@
 {
-    "name": "lthn/php-commerce",
+    "name": "dappcore/php-commerce",
     "description": "Commerce, subscriptions and payments for Laravel",
     "keywords": [
         "laravel",
@@ -11,7 +11,7 @@
     "license": "EUPL-1.2",
     "require": {
         "php": "^8.2",
-        "lthn/php": "*"
+        "dappcore/php": "*"
     },
     "require-dev": {
         "laravel/pint": "^1.18",
