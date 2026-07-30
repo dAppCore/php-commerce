@@ -21,6 +21,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          path: php-commerce
+
+      # composer.json declares a `path` repository at ../php so that
+      # developers can iterate against a sibling dappcore/php checkout
+      # without pushing/tagging. Checking dAppCore/php out as a true
+      # sibling directory here (both under $GITHUB_WORKSPACE) satisfies
+      # that same relative path on the runner, with no change to
+      # composer.json or the local dev workflow.
+      - name: Checkout dappcore/php (sibling for path repository)
+        uses: actions/checkout@v6
+        with:
+          repository: dAppCore/php
+          path: php
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -30,18 +44,21 @@ jobs:
           coverage: pcov
 
       - name: Install dependencies
+        working-directory: php-commerce
         run: composer install --prefer-dist --no-interaction --no-progress
 
       - name: Run Pint
+        working-directory: php-commerce
         run: vendor/bin/pint --test
 
       - name: Run tests
+        working-directory: php-commerce
         run: vendor/bin/pest --ci --coverage --coverage-clover coverage.xml
 
       - name: Upload coverage to Codecov
         if: matrix.php == '8.3'
         uses: codecov/codecov-action@v5
         with:
-          files: coverage.xml
+          files: php-commerce/coverage.xml
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
