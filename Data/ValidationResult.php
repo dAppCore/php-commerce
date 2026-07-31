@@ -15,7 +15,8 @@ readonly class ValidationResult
         public float $discountAmount,
         public string $discountType,
         public ?Coupon $coupon = null,
-    ) {}
+    ) {
+    }
 
     public static function valid(Coupon $coupon, float $discountAmount, string $discountType): self
     {

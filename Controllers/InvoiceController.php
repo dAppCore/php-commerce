@@ -18,7 +18,8 @@ class InvoiceController extends Controller
 {
     public function __construct(
         protected InvoiceService $invoiceService
-    ) {}
+    ) {
+    }
 
     /**
      * Download invoice PDF.

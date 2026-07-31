@@ -16,7 +16,8 @@ class SubscriptionPaused extends Notification implements ShouldQueue
 
     public function __construct(
         public Subscription $subscription
-    ) {}
+    ) {
+    }
 
     public function via(object $notifiable): array
     {
@@ -27,7 +28,7 @@ class SubscriptionPaused extends Notification implements ShouldQueue
     {
         $suspendDays = config('commerce.dunning.suspend_after_days', 14);
 
-        return (new MailMessage)
+        return (new MailMessage())
             ->subject('Subscription paused - payment required')
             ->greeting('Your subscription has been paused')
             ->line('We were unable to process your payment after multiple attempts. Your subscription has been paused to prevent further charge attempts.')

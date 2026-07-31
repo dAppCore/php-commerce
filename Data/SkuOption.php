@@ -15,7 +15,8 @@ readonly class SkuOption
         public string $code,
         public string $value,
         public int $quantity = 1,
-    ) {}
+    ) {
+    }
 
     /**
      * Build the string representation.

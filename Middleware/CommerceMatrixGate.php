@@ -24,7 +24,8 @@ class CommerceMatrixGate
 {
     public function __construct(
         protected PermissionMatrixService $matrix
-    ) {}
+    ) {
+    }
 
     /**
      * Handle an incoming request.

@@ -17,7 +17,8 @@ class RefundProcessed extends Notification implements ShouldQueue
 
     public function __construct(
         public Refund $refund
-    ) {}
+    ) {
+    }
 
     public function via(object $notifiable): array
     {
@@ -29,7 +30,7 @@ class RefundProcessed extends Notification implements ShouldQueue
         $commerce = app(CommerceService::class);
         $amount = $commerce->formatMoney($this->refund->amount, $this->refund->currency);
 
-        return (new MailMessage)
+        return (new MailMessage())
             ->subject('Refund processed - '.$amount)
             ->greeting('Your refund has been processed')
             ->line('We have processed a refund of '.$amount.' to your original payment method.')

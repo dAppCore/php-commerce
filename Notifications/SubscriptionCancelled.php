@@ -16,7 +16,8 @@ class SubscriptionCancelled extends Notification implements ShouldQueue
 
     public function __construct(
         public Subscription $subscription
-    ) {}
+    ) {
+    }
 
     public function via(object $notifiable): array
     {
@@ -25,7 +26,7 @@ class SubscriptionCancelled extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
+        return (new MailMessage())
             ->subject('Subscription cancelled')
             ->greeting('Your subscription has ended')
             ->line('Your subscription has been cancelled and your account has been downgraded.')

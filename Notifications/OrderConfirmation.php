@@ -17,7 +17,8 @@ class OrderConfirmation extends Notification implements ShouldQueue
 
     public function __construct(
         public Order $order
-    ) {}
+    ) {
+    }
 
     public function via(object $notifiable): array
     {
@@ -30,7 +31,7 @@ class OrderConfirmation extends Notification implements ShouldQueue
         $items = $this->order->items;
         $firstItem = $items->first();
 
-        return (new MailMessage)
+        return (new MailMessage())
             ->subject('Order confirmation - '.$this->order->order_number)
             ->greeting('Thank you for your order')
             ->line('Your order has been confirmed and your account has been activated.')

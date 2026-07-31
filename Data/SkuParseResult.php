@@ -21,7 +21,8 @@ readonly class SkuParseResult
      */
     public function __construct(
         public array $items,
-    ) {}
+    ) {
+    }
 
     /**
      * Get all items as a collection.

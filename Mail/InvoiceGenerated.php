@@ -19,14 +19,16 @@ use Illuminate\Support\Facades\Storage;
  */
 class InvoiceGenerated extends Mailable implements ShouldQueue
 {
-    use Queueable, SerializesModels;
+    use Queueable;
+    use SerializesModels;
 
     /**
      * Create a new message instance.
      */
     public function __construct(
         public Invoice $invoice
-    ) {}
+    ) {
+    }
 
     /**
      * Get the message envelope.

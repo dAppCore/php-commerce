@@ -16,7 +16,8 @@ class ResetUsageOnRenewal
 {
     public function __construct(
         protected UsageBillingService $usageBilling
-    ) {}
+    ) {
+    }
 
     public function handle(SubscriptionRenewed $event): void
     {

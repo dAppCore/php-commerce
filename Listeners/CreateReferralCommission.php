@@ -19,7 +19,8 @@ class CreateReferralCommission implements ShouldQueue
 {
     public function __construct(
         protected ReferralService $referralService
-    ) {}
+    ) {
+    }
 
     /**
      * Handle the order paid event.

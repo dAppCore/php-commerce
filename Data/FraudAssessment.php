@@ -19,7 +19,8 @@ class FraudAssessment
         public readonly ?int $stripeRiskScore = null,
         public readonly bool $shouldBlock = false,
         public readonly bool $shouldReview = false,
-    ) {}
+    ) {
+    }
 
     /**
      * Create a not-assessed result (fraud detection disabled).

@@ -360,7 +360,8 @@ class TaxResult
         public readonly ?string $jurisdiction,
         public readonly bool $isExempt,
         public readonly ?string $exemptionReason,
-    ) {}
+    ) {
+    }
 
     /**
      * Get total including tax.

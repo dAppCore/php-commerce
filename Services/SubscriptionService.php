@@ -20,7 +20,8 @@ class SubscriptionService
     public function __construct(
         protected CommerceService $commerce,
         protected EntitlementService $entitlements,
-    ) {}
+    ) {
+    }
 
     /**
      * Create a new subscription for a workspace package.

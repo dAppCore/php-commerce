@@ -10,7 +10,8 @@ readonly class ParsedItem
         public string $segment,
         public string $type,
         public string $value,
-    ) {}
+    ) {
+    }
 
     /**
      * @return array{segment: string, type: string, value: string}

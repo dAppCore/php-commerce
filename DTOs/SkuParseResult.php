@@ -14,7 +14,8 @@ readonly class SkuParseResult
         public array $options,
         public string $entityPrefix,
         public bool $valid,
-    ) {}
+    ) {
+    }
 
     /**
      * @return array{base_sku: string, options: array<int, array{key: string, value: string, position: int}>, entity_prefix: string, valid: bool}

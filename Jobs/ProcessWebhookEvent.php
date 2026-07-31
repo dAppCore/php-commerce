@@ -26,7 +26,8 @@ class ProcessWebhookEvent implements ShouldQueue
 
     public function __construct(
         public int $webhookEventId,
-    ) {}
+    ) {
+    }
 
     public function handle(): void
     {

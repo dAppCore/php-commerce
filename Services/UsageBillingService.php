@@ -30,7 +30,8 @@ class UsageBillingService
     public function __construct(
         protected InvoiceService $invoiceService,
         protected TaxService $taxService,
-    ) {}
+    ) {
+    }
 
     // -------------------------------------------------------------------------
     // Usage Recording

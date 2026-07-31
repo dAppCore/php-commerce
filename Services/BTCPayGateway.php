@@ -17,7 +17,7 @@ class BTCPayGateway implements PaymentGatewayContract
     public function __construct(
         protected ?LegacyBTCPayGateway $gateway = null,
     ) {
-        $this->gateway ??= new LegacyBTCPayGateway;
+        $this->gateway ??= new LegacyBTCPayGateway();
     }
 
     /**

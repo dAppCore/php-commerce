@@ -18,7 +18,8 @@ class MatrixTrainingController extends Controller
 {
     public function __construct(
         protected PermissionMatrixService $matrix
-    ) {}
+    ) {
+    }
 
     /**
      * Process a training decision.

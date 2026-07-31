@@ -37,7 +37,8 @@ class BTCPayWebhookController extends Controller
         protected CommerceService $commerce,
         protected WebhookLogger $webhookLogger,
         protected WebhookRateLimiter $rateLimiter,
-    ) {}
+    ) {
+    }
 
     public function handle(Request $request): Response
     {

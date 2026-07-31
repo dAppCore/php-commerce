@@ -16,7 +16,8 @@ class RefundService
 {
     public function __construct(
         protected CommerceService $commerce
-    ) {}
+    ) {
+    }
 
     /**
      * Process a full refund for a payment.

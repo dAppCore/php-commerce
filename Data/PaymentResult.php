@@ -18,7 +18,8 @@ readonly class PaymentResult
         public ?string $reason = null,
         public int $attempts = 0,
         public ?Carbon $nextRetryAt = null,
-    ) {}
+    ) {
+    }
 
     public static function successful(?Payment $payment = null, int $attempts = 0): self
     {

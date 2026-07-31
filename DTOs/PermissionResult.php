@@ -13,7 +13,8 @@ readonly class PermissionResult
         public bool $allowed,
         public ?string $reason,
         public array $permissions,
-    ) {}
+    ) {
+    }
 
     /**
      * @return array{allowed: bool, reason: string|null, permissions: array<int, string>}

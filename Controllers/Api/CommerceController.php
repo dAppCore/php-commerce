@@ -32,7 +32,8 @@ class CommerceController extends Controller
         protected CommerceService $commerceService,
         protected SubscriptionService $subscriptionService,
         protected InvoiceService $invoiceService,
-    ) {}
+    ) {
+    }
 
     /**
      * Get the current workspace from the authenticated user.

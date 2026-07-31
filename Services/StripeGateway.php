@@ -17,7 +17,7 @@ class StripeGateway implements PaymentGatewayContract
     public function __construct(
         protected ?LegacyStripeGateway $gateway = null,
     ) {
-        $this->gateway ??= new LegacyStripeGateway;
+        $this->gateway ??= new LegacyStripeGateway();
     }
 
     /**

@@ -11,7 +11,8 @@ readonly class CouponValidationResult
         public ?string $reason,
         public float $discountAmount,
         public string $discountType,
-    ) {}
+    ) {
+    }
 
     /**
      * @return array{valid: bool, reason: string|null, discount_amount: float, discount_type: string}

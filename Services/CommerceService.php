@@ -45,7 +45,8 @@ class CommerceService
         protected CurrencyService $currencyService,
         protected CheckoutRateLimiter $rateLimiter,
         protected FraudService $fraudService,
-    ) {}
+    ) {
+    }
 
     /**
      * Get the active payment gateway.

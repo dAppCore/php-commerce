@@ -36,7 +36,8 @@ class DunningService
         protected CommerceService $commerce,
         protected SubscriptionService $subscriptions,
         protected EntitlementService $entitlements,
-    ) {}
+    ) {
+    }
 
     /**
      * Build and persist the failed-payment retry schedule for a subscription.

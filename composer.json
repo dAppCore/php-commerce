@@ -11,7 +11,8 @@
     "license": "EUPL-1.2",
     "require": {
         "php": "^8.2",
-        "dappcore/php": "*"
+        "dappcore/php": "*",
+        "spatie/laravel-activitylog": "^4.8"
     },
     "require-dev": {
         "laravel/pint": "^1.18",

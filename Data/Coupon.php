@@ -22,7 +22,8 @@ readonly class Coupon
         public ?CarbonImmutable $expiresAt,
         public bool $active,
         public int $usedCount,
-    ) {}
+    ) {
+    }
 
     public static function fromModel(CouponModel $coupon): self
     {

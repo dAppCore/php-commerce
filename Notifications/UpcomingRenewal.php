@@ -19,7 +19,8 @@ class UpcomingRenewal extends Notification implements ShouldQueue
         public Subscription $subscription,
         public float $amount,
         public string $currency = 'GBP'
-    ) {}
+    ) {
+    }
 
     public function via(object $notifiable): array
     {
@@ -32,7 +33,7 @@ class UpcomingRenewal extends Notification implements ShouldQueue
         $packageName = $this->subscription->workspacePackage?->package?->name ?? 'Subscription';
         $renewalDate = $this->subscription->current_period_end?->format('j F Y');
 
-        return (new MailMessage)
+        return (new MailMessage())
             ->subject('Upcoming renewal - '.$packageName)
             ->greeting('Your subscription renews soon')
             ->line('Your '.$packageName.' subscription will automatically renew on '.$renewalDate.'.')

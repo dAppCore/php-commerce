@@ -39,7 +39,8 @@ class CheckoutRateLimiter
 
     public function __construct(
         protected readonly RateLimiter $limiter
-    ) {}
+    ) {
+    }
 
     /**
      * Check if the customer/IP has exceeded checkout rate limits.

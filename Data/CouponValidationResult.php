@@ -15,7 +15,8 @@ class CouponValidationResult
         public readonly bool $isValid,
         public readonly ?Coupon $coupon,
         public readonly ?string $error,
-    ) {}
+    ) {
+    }
 
     public static function valid(Coupon $coupon): self
     {

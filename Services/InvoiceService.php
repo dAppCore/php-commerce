@@ -24,7 +24,8 @@ class InvoiceService
 {
     public function __construct(
         protected TaxService $taxService,
-    ) {}
+    ) {
+    }
 
     /**
      * Create an invoice from an order.

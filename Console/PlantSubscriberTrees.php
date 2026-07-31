@@ -6,9 +6,9 @@ namespace Core\Mod\Commerce\Console;
 
 use Carbon\Carbon;
 use Core\Mod\Commerce\Models\Subscription;
+use Core\Mod\Trees\Models\TreePlanting;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
-use Mod\Trees\Models\TreePlanting;
 
 /**
  * Plants trees for active subscribers.

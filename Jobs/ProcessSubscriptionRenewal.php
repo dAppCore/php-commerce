@@ -24,7 +24,10 @@ use Illuminate\Support\Facades\Log;
  */
 class ProcessSubscriptionRenewal implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     public int $tries = 3;
 
@@ -33,7 +36,8 @@ class ProcessSubscriptionRenewal implements ShouldQueue
     public function __construct(
         public Subscription $subscription,
         public ?\DateTimeInterface $newPeriodEnd = null
-    ) {}
+    ) {
+    }
 
     public function handle(EntitlementService $entitlements): void
     {

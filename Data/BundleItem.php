@@ -19,7 +19,8 @@ readonly class BundleItem
     public function __construct(
         public array $items,
         public string $hash,
-    ) {}
+    ) {
+    }
 
     /**
      * Build the string representation (pipe-separated).

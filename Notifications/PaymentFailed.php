@@ -16,7 +16,8 @@ class PaymentFailed extends Notification implements ShouldQueue
 
     public function __construct(
         public Subscription $subscription
-    ) {}
+    ) {
+    }
 
     public function via(object $notifiable): array
     {
@@ -25,7 +26,7 @@ class PaymentFailed extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
+        return (new MailMessage())
             ->subject('Payment failed - action required')
             ->greeting('We couldn\'t process your payment')
             ->line('We attempted to charge your payment method for your subscription renewal, but the payment was declined.')

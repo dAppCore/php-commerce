@@ -17,7 +17,8 @@ readonly class DunningSchedule
     public function __construct(
         public array $retryDates,
         public Carbon $suspensionDate,
-    ) {}
+    ) {
+    }
 
     /**
      * @return array{retry_dates: array<int, string>, suspension_date: string}

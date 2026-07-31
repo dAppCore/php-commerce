@@ -25,7 +25,8 @@ class ProvisionSocialHostSubscription implements ShouldQueue
 {
     public function __construct(
         protected EntitlementService $entitlementService
-    ) {}
+    ) {
+    }
 
     /**
      * Handle subscription created event.

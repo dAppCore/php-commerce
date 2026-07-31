@@ -39,7 +39,8 @@ readonly class ProrationResult
 
         /** Currency code */
         public string $currency = 'GBP',
-    ) {}
+    ) {
+    }
 
     /**
      * Check if customer needs to pay (upgrade).

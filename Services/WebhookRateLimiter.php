@@ -39,7 +39,8 @@ class WebhookRateLimiter
 
     public function __construct(
         protected readonly RateLimiter $limiter
-    ) {}
+    ) {
+    }
 
     /**
      * Check if the IP has exceeded webhook rate limits.

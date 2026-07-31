@@ -18,7 +18,8 @@ class PaymentRetry extends Notification implements ShouldQueue
         public Invoice $invoice,
         public int $attemptNumber,
         public int $maxAttempts
-    ) {}
+    ) {
+    }
 
     public function via(object $notifiable): array
     {
@@ -29,7 +30,7 @@ class PaymentRetry extends Notification implements ShouldQueue
     {
         $remainingAttempts = $this->maxAttempts - $this->attemptNumber;
 
-        return (new MailMessage)
+        return (new MailMessage())
             ->subject('Payment retry scheduled - action required')
             ->greeting('Payment attempt '.$this->attemptNumber.' failed')
             ->line('We attempted to charge your payment method for invoice '.$this->invoice->invoice_number.', but the payment was declined.')

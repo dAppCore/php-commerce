@@ -17,7 +17,8 @@ readonly class ParsedItem
     public function __construct(
         public string $baseSku,
         public array $options = [],
-    ) {}
+    ) {
+    }
 
     /**
      * Build the string representation.

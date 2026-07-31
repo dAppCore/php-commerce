@@ -18,7 +18,8 @@ final readonly class PermissionResult
         public ?string $key = null,
         public ?string $scope = null,
         public ?string $trainingUrl = null,
-    ) {}
+    ) {
+    }
 
     // Status constants
     public const STATUS_ALLOWED = 'allowed';

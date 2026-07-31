@@ -48,7 +48,8 @@ class StripeWebhookController extends Controller
         protected WebhookLogger $webhookLogger,
         protected FraudService $fraudService,
         protected WebhookRateLimiter $rateLimiter,
-    ) {}
+    ) {
+    }
 
     public function handle(Request $request): Response
     {

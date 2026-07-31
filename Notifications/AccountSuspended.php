@@ -16,7 +16,8 @@ class AccountSuspended extends Notification implements ShouldQueue
 
     public function __construct(
         public Subscription $subscription
-    ) {}
+    ) {
+    }
 
     public function via(object $notifiable): array
     {
@@ -27,7 +28,7 @@ class AccountSuspended extends Notification implements ShouldQueue
     {
         $cancelDays = config('commerce.dunning.cancel_after_days', 30) - config('commerce.dunning.suspend_after_days', 14);
 
-        return (new MailMessage)
+        return (new MailMessage())
             ->subject('Account suspended - immediate action required')
             ->greeting('Your account has been suspended')
             ->line('Due to repeated payment failures, your account access has been temporarily suspended.')

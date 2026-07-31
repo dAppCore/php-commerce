@@ -9,4 +9,6 @@ use Exception;
 /**
  * Thrown when attempting to modify a locked permission.
  */
-class PermissionLockedException extends Exception {}
+class PermissionLockedException extends Exception
+{
+}

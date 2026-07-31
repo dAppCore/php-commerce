@@ -10,7 +10,8 @@ readonly class BundleItem
         public int $productId,
         public int $quantity,
         public ?float $priceOverride = null,
-    ) {}
+    ) {
+    }
 
     /**
      * @return array{product_id: int, quantity: int, price_override: float|null}

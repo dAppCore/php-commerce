@@ -10,7 +10,8 @@ use Illuminate\Queue\SerializesModels;
 
 class SubscriptionRenewed
 {
-    use Dispatchable, SerializesModels;
+    use Dispatchable;
+    use SerializesModels;
 
     public function __construct(
         public Subscription $subscription,

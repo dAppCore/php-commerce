@@ -32,12 +32,12 @@ use Core\Mod\Commerce\Services\ProrationService;
 use Core\Mod\Commerce\Services\ReferralService;
 use Core\Mod\Commerce\Services\SkuBuilderService;
 use Core\Mod\Commerce\Services\SkuParserService;
-use Core\Mod\Commerce\Services\SubscriptionStateMachine;
 use Core\Mod\Commerce\Services\SubscriptionService;
+use Core\Mod\Commerce\Services\SubscriptionStateMachine;
 use Core\Mod\Commerce\Services\TaxService;
 use Core\Mod\Commerce\Services\UsageBillingService;
-use Core\Mod\Commerce\Services\WebhookService;
 use Core\Mod\Commerce\Services\WebhookRateLimiter;
+use Core\Mod\Commerce\Services\WebhookService;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -108,19 +108,19 @@ class Boot extends ServiceProvider
 
         // Payment Gateways
         $this->app->singleton('commerce.gateway.btcpay', function ($app) {
-            return new BTCPayGateway;
+            return new BTCPayGateway();
         });
 
         $this->app->singleton('commerce.gateway.stripe', function ($app) {
-            return new StripeGateway;
+            return new StripeGateway();
         });
 
         $this->app->singleton('commerce.rfc_gateway.btcpay', function ($app) {
-            return new Services\BTCPayGateway;
+            return new Services\BTCPayGateway();
         });
 
         $this->app->singleton('commerce.rfc_gateway.stripe', function ($app) {
-            return new Services\StripeGateway;
+            return new Services\StripeGateway();
         });
 
         $this->app->bind(PaymentGatewayContract::class, function ($app) {

@@ -14,7 +14,8 @@ readonly class FraudAssessment
         public string $riskLevel,
         public array $reasons,
         public bool $block,
-    ) {}
+    ) {
+    }
 
     /**
      * @return array{score: int, risk_level: string, reasons: array<int, string>, block: bool}

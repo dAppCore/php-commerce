@@ -6,8 +6,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class () extends Migration {
     public function up(): void
     {
         $this->addColumn('subscriptions', 'product_id', fn (Blueprint $table) => $table->unsignedBigInteger('product_id')->nullable()->index());

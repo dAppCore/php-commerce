@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Core\Mod\Commerce\Controllers\Webhooks\BTCPayWebhookController;
 use Core\Mod\Commerce\Controllers\Webhooks\StripeWebhookController;
+use Core\Mod\Commerce\Exceptions\WebhookPayloadValidationException;
 use Core\Mod\Commerce\Models\Order;
 use Core\Mod\Commerce\Models\OrderItem;
 use Core\Mod\Commerce\Models\Payment;
@@ -24,7 +25,6 @@ use Core\Tenant\Services\EntitlementService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
-use WebhookPayloadValidationException;
 
 uses(RefreshDatabase::class);
 
@@ -118,7 +118,7 @@ describe('StripeWebhookController', function () {
             $mockInvoice = Mockery::mock(InvoiceService::class);
             $mockEntitlements = Mockery::mock(EntitlementService::class);
 
-            $webhookLogger = new WebhookLogger;
+            $webhookLogger = new WebhookLogger();
 
             $controller = new StripeWebhookController(
                 $mockGateway,
@@ -128,7 +128,7 @@ describe('StripeWebhookController', function () {
                 $webhookLogger
             );
 
-            $request = new Request;
+            $request = new Request();
             $request->headers->set('Stripe-Signature', 't=123,v1=abc');
 
             $response = $controller->handle($request);
@@ -171,7 +171,7 @@ describe('StripeWebhookController', function () {
 
             $mockInvoice = Mockery::mock(InvoiceService::class);
             $mockEntitlements = Mockery::mock(EntitlementService::class);
-            $webhookLogger = new WebhookLogger;
+            $webhookLogger = new WebhookLogger();
 
             $controller = new StripeWebhookController(
                 $mockGateway,
@@ -181,7 +181,7 @@ describe('StripeWebhookController', function () {
                 $webhookLogger
             );
 
-            $request = new Request;
+            $request = new Request();
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200)
@@ -207,7 +207,7 @@ describe('StripeWebhookController', function () {
             $mockCommerce = Mockery::mock(CommerceService::class);
             $mockInvoice = Mockery::mock(InvoiceService::class);
             $mockEntitlements = Mockery::mock(EntitlementService::class);
-            $webhookLogger = new WebhookLogger;
+            $webhookLogger = new WebhookLogger();
 
             $controller = new StripeWebhookController(
                 $mockGateway,
@@ -217,7 +217,7 @@ describe('StripeWebhookController', function () {
                 $webhookLogger
             );
 
-            $request = new Request;
+            $request = new Request();
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200)
@@ -264,7 +264,7 @@ describe('StripeWebhookController', function () {
             $mockCommerce = Mockery::mock(CommerceService::class);
             $mockInvoice = Mockery::mock(InvoiceService::class);
             $mockEntitlements = Mockery::mock(EntitlementService::class);
-            $webhookLogger = new WebhookLogger;
+            $webhookLogger = new WebhookLogger();
 
             $controller = new StripeWebhookController(
                 $mockGateway,
@@ -274,7 +274,7 @@ describe('StripeWebhookController', function () {
                 $webhookLogger
             );
 
-            $request = new Request;
+            $request = new Request();
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200);
@@ -326,7 +326,7 @@ describe('StripeWebhookController', function () {
             $mockInvoice = Mockery::mock(InvoiceService::class);
             $mockEntitlements = Mockery::mock(EntitlementService::class);
             $mockEntitlements->shouldReceive('revokePackage')->once();
-            $webhookLogger = new WebhookLogger;
+            $webhookLogger = new WebhookLogger();
 
             $controller = new StripeWebhookController(
                 $mockGateway,
@@ -336,7 +336,7 @@ describe('StripeWebhookController', function () {
                 $webhookLogger
             );
 
-            $request = new Request;
+            $request = new Request();
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200);
@@ -362,7 +362,7 @@ describe('StripeWebhookController', function () {
             $mockCommerce = Mockery::mock(CommerceService::class);
             $mockInvoice = Mockery::mock(InvoiceService::class);
             $mockEntitlements = Mockery::mock(EntitlementService::class);
-            $webhookLogger = new WebhookLogger;
+            $webhookLogger = new WebhookLogger();
 
             $controller = new StripeWebhookController(
                 $mockGateway,
@@ -372,7 +372,7 @@ describe('StripeWebhookController', function () {
                 $webhookLogger
             );
 
-            $request = new Request;
+            $request = new Request();
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200)
@@ -460,11 +460,11 @@ describe('BTCPayWebhookController', function () {
             $mockCommerce = Mockery::mock(CommerceService::class);
             $mockCommerce->shouldReceive('fulfillOrder')->once();
 
-            $webhookLogger = new WebhookLogger;
+            $webhookLogger = new WebhookLogger();
 
             $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-            $request = new Request;
+            $request = new Request();
             $request->headers->set('BTCPay-Sig', 'valid_signature');
 
             $response = $controller->handle($request);
@@ -500,11 +500,11 @@ describe('BTCPayWebhookController', function () {
             $mockCommerce = Mockery::mock(CommerceService::class);
             $mockCommerce->shouldNotReceive('fulfillOrder');
 
-            $webhookLogger = new WebhookLogger;
+            $webhookLogger = new WebhookLogger();
 
             $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-            $request = new Request;
+            $request = new Request();
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200)
@@ -523,11 +523,11 @@ describe('BTCPayWebhookController', function () {
             ]);
 
             $mockCommerce = Mockery::mock(CommerceService::class);
-            $webhookLogger = new WebhookLogger;
+            $webhookLogger = new WebhookLogger();
 
             $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-            $request = new Request;
+            $request = new Request();
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200)
@@ -548,11 +548,11 @@ describe('BTCPayWebhookController', function () {
             ]);
 
             $mockCommerce = Mockery::mock(CommerceService::class);
-            $webhookLogger = new WebhookLogger;
+            $webhookLogger = new WebhookLogger();
 
             $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-            $request = new Request;
+            $request = new Request();
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200);
@@ -575,11 +575,11 @@ describe('BTCPayWebhookController', function () {
             ]);
 
             $mockCommerce = Mockery::mock(CommerceService::class);
-            $webhookLogger = new WebhookLogger;
+            $webhookLogger = new WebhookLogger();
 
             $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-            $request = new Request;
+            $request = new Request();
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200);
@@ -602,11 +602,11 @@ describe('BTCPayWebhookController', function () {
             ]);
 
             $mockCommerce = Mockery::mock(CommerceService::class);
-            $webhookLogger = new WebhookLogger;
+            $webhookLogger = new WebhookLogger();
 
             $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-            $request = new Request;
+            $request = new Request();
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200);
@@ -629,11 +629,11 @@ describe('BTCPayWebhookController', function () {
             ]);
 
             $mockCommerce = Mockery::mock(CommerceService::class);
-            $webhookLogger = new WebhookLogger;
+            $webhookLogger = new WebhookLogger();
 
             $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-            $request = new Request;
+            $request = new Request();
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200);
@@ -656,11 +656,11 @@ describe('BTCPayWebhookController', function () {
             ]);
 
             $mockCommerce = Mockery::mock(CommerceService::class);
-            $webhookLogger = new WebhookLogger;
+            $webhookLogger = new WebhookLogger();
 
             $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-            $request = new Request;
+            $request = new Request();
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200);
@@ -683,11 +683,11 @@ describe('BTCPayWebhookController', function () {
             ]);
 
             $mockCommerce = Mockery::mock(CommerceService::class);
-            $webhookLogger = new WebhookLogger;
+            $webhookLogger = new WebhookLogger();
 
             $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-            $request = new Request;
+            $request = new Request();
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200)
@@ -801,7 +801,7 @@ describe('WebhookEvent model', function () {
 
 describe('WebhookLogger service', function () {
     it('starts and completes webhook logging', function () {
-        $logger = new WebhookLogger;
+        $logger = new WebhookLogger();
 
         $event = $logger->start(
             gateway: 'stripe',
@@ -819,7 +819,7 @@ describe('WebhookLogger service', function () {
     });
 
     it('handles failures correctly', function () {
-        $logger = new WebhookLogger;
+        $logger = new WebhookLogger();
 
         $logger->start('btcpay', 'invoice.paid', '{}');
         $logger->fail('Database error', 500);
@@ -831,7 +831,7 @@ describe('WebhookLogger service', function () {
     });
 
     it('detects duplicate events', function () {
-        $logger = new WebhookLogger;
+        $logger = new WebhookLogger();
 
         // First event
         $logger->start('stripe', 'test.event', '{}', 'evt_dup_test');
@@ -842,9 +842,9 @@ describe('WebhookLogger service', function () {
     });
 
     it('extracts relevant headers', function () {
-        $logger = new WebhookLogger;
+        $logger = new WebhookLogger();
 
-        $request = new Request;
+        $request = new Request();
         $request->headers->set('Stripe-Signature', 't=123,v1=secret_signature_here');
         $request->headers->set('Content-Type', 'application/json');
         $request->headers->set('User-Agent', 'Stripe/1.0');
@@ -860,7 +860,7 @@ describe('WebhookLogger service', function () {
     });
 
     it('gets statistics for webhook events', function () {
-        $logger = new WebhookLogger;
+        $logger = new WebhookLogger();
 
         // Create some events
         WebhookEvent::record('stripe', 'evt.1', '{}')->markProcessed();
@@ -885,7 +885,7 @@ describe('BTCPayGateway webhook signature verification', function () {
     it('verifies correct HMAC signature', function () {
         config(['commerce.gateways.btcpay.webhook_secret' => 'test_secret_123']);
 
-        $gateway = new BTCPayGateway;
+        $gateway = new BTCPayGateway();
         $payload = '{"type":"InvoiceSettled","invoiceId":"123"}';
         $signature = hash_hmac('sha256', $payload, 'test_secret_123');
 
@@ -895,7 +895,7 @@ describe('BTCPayGateway webhook signature verification', function () {
     it('verifies signature with sha256= prefix', function () {
         config(['commerce.gateways.btcpay.webhook_secret' => 'test_secret_123']);
 
-        $gateway = new BTCPayGateway;
+        $gateway = new BTCPayGateway();
         $payload = '{"type":"InvoiceSettled","invoiceId":"123"}';
         $signature = 'sha256='.hash_hmac('sha256', $payload, 'test_secret_123');
 
@@ -905,7 +905,7 @@ describe('BTCPayGateway webhook signature verification', function () {
     it('rejects invalid signature', function () {
         config(['commerce.gateways.btcpay.webhook_secret' => 'test_secret_123']);
 
-        $gateway = new BTCPayGateway;
+        $gateway = new BTCPayGateway();
         $payload = '{"type":"InvoiceSettled","invoiceId":"123"}';
 
         expect($gateway->verifyWebhookSignature($payload, 'invalid'))->toBeFalse();
@@ -914,7 +914,7 @@ describe('BTCPayGateway webhook signature verification', function () {
     it('rejects empty signature', function () {
         config(['commerce.gateways.btcpay.webhook_secret' => 'test_secret_123']);
 
-        $gateway = new BTCPayGateway;
+        $gateway = new BTCPayGateway();
         $payload = '{"type":"InvoiceSettled","invoiceId":"123"}';
 
         expect($gateway->verifyWebhookSignature($payload, ''))->toBeFalse();
@@ -923,7 +923,7 @@ describe('BTCPayGateway webhook signature verification', function () {
     it('rejects when no webhook secret configured', function () {
         config(['commerce.gateways.btcpay.webhook_secret' => null]);
 
-        $gateway = new BTCPayGateway;
+        $gateway = new BTCPayGateway();
         $payload = '{"type":"InvoiceSettled","invoiceId":"123"}';
         $signature = hash_hmac('sha256', $payload, 'any_secret');
 
@@ -933,7 +933,7 @@ describe('BTCPayGateway webhook signature verification', function () {
 
 describe('BTCPayGateway webhook event parsing', function () {
     it('parses valid webhook payload', function () {
-        $gateway = new BTCPayGateway;
+        $gateway = new BTCPayGateway();
         $payload = json_encode([
             'type' => 'InvoiceSettled',
             'invoiceId' => 'inv_123',
@@ -950,7 +950,7 @@ describe('BTCPayGateway webhook event parsing', function () {
     });
 
     it('throws exception for invalid JSON', function () {
-        $gateway = new BTCPayGateway;
+        $gateway = new BTCPayGateway();
         $payload = 'invalid json {{{';
 
         expect(fn () => $gateway->parseWebhookEvent($payload))
@@ -958,7 +958,7 @@ describe('BTCPayGateway webhook event parsing', function () {
     });
 
     it('maps event types correctly', function () {
-        $gateway = new BTCPayGateway;
+        $gateway = new BTCPayGateway();
 
         $testCases = [
             ['type' => 'InvoiceCreated', 'expected' => 'invoice.created'],
@@ -980,7 +980,7 @@ describe('BTCPayGateway webhook event parsing', function () {
     });
 
     it('maps invoice statuses correctly', function () {
-        $gateway = new BTCPayGateway;
+        $gateway = new BTCPayGateway();
 
         $testCases = [
             ['status' => 'New', 'expected' => 'pending'],
@@ -1008,7 +1008,7 @@ describe('BTCPayGateway webhook event parsing', function () {
 
 describe('BTCPayGateway webhook payload validation', function () {
     it('throws exception for missing type field', function () {
-        $gateway = new BTCPayGateway;
+        $gateway = new BTCPayGateway();
         $payload = json_encode([
             'invoiceId' => 'inv_123',
             'status' => 'Settled',
@@ -1019,7 +1019,7 @@ describe('BTCPayGateway webhook payload validation', function () {
     });
 
     it('throws exception for missing invoice identifier', function () {
-        $gateway = new BTCPayGateway;
+        $gateway = new BTCPayGateway();
         $payload = json_encode([
             'type' => 'InvoiceSettled',
             'status' => 'Settled',
@@ -1030,7 +1030,7 @@ describe('BTCPayGateway webhook payload validation', function () {
     });
 
     it('accepts payload with id instead of invoiceId', function () {
-        $gateway = new BTCPayGateway;
+        $gateway = new BTCPayGateway();
         $payload = json_encode([
             'type' => 'InvoiceSettled',
             'id' => 'inv_123',
@@ -1043,7 +1043,7 @@ describe('BTCPayGateway webhook payload validation', function () {
     });
 
     it('throws exception when type is not a string', function () {
-        $gateway = new BTCPayGateway;
+        $gateway = new BTCPayGateway();
         $payload = json_encode([
             'type' => 123, // Should be string
             'invoiceId' => 'inv_123',
@@ -1054,7 +1054,7 @@ describe('BTCPayGateway webhook payload validation', function () {
     });
 
     it('throws exception when invoiceId is not a string', function () {
-        $gateway = new BTCPayGateway;
+        $gateway = new BTCPayGateway();
         $payload = json_encode([
             'type' => 'InvoiceSettled',
             'invoiceId' => 12345, // Should be string
@@ -1065,7 +1065,7 @@ describe('BTCPayGateway webhook payload validation', function () {
     });
 
     it('throws exception when metadata is not an object', function () {
-        $gateway = new BTCPayGateway;
+        $gateway = new BTCPayGateway();
         $payload = json_encode([
             'type' => 'InvoiceSettled',
             'invoiceId' => 'inv_123',
@@ -1077,7 +1077,7 @@ describe('BTCPayGateway webhook payload validation', function () {
     });
 
     it('throws exception when amount is not numeric', function () {
-        $gateway = new BTCPayGateway;
+        $gateway = new BTCPayGateway();
         $payload = json_encode([
             'type' => 'InvoiceSettled',
             'invoiceId' => 'inv_123',
@@ -1089,7 +1089,7 @@ describe('BTCPayGateway webhook payload validation', function () {
     });
 
     it('throws exception when type is empty string', function () {
-        $gateway = new BTCPayGateway;
+        $gateway = new BTCPayGateway();
         $payload = json_encode([
             'type' => '',
             'invoiceId' => 'inv_123',
@@ -1100,7 +1100,7 @@ describe('BTCPayGateway webhook payload validation', function () {
     });
 
     it('throws exception when type exceeds maximum length', function () {
-        $gateway = new BTCPayGateway;
+        $gateway = new BTCPayGateway();
         $payload = json_encode([
             'type' => str_repeat('a', 101), // Exceeds 100 char limit
             'invoiceId' => 'inv_123',
@@ -1111,7 +1111,7 @@ describe('BTCPayGateway webhook payload validation', function () {
     });
 
     it('throws exception when invoiceId exceeds maximum length', function () {
-        $gateway = new BTCPayGateway;
+        $gateway = new BTCPayGateway();
         $payload = json_encode([
             'type' => 'InvoiceSettled',
             'invoiceId' => str_repeat('a', 256), // Exceeds 255 char limit
@@ -1122,7 +1122,7 @@ describe('BTCPayGateway webhook payload validation', function () {
     });
 
     it('throws exception for invalid currency code', function () {
-        $gateway = new BTCPayGateway;
+        $gateway = new BTCPayGateway();
         $payload = json_encode([
             'type' => 'InvoiceSettled',
             'invoiceId' => 'inv_123',
@@ -1134,7 +1134,7 @@ describe('BTCPayGateway webhook payload validation', function () {
     });
 
     it('throws exception for negative amount', function () {
-        $gateway = new BTCPayGateway;
+        $gateway = new BTCPayGateway();
         $payload = json_encode([
             'type' => 'InvoiceSettled',
             'invoiceId' => 'inv_123',
@@ -1146,7 +1146,7 @@ describe('BTCPayGateway webhook payload validation', function () {
     });
 
     it('accepts valid numeric string amount', function () {
-        $gateway = new BTCPayGateway;
+        $gateway = new BTCPayGateway();
         $payload = json_encode([
             'type' => 'InvoiceSettled',
             'invoiceId' => 'inv_123',
@@ -1159,7 +1159,7 @@ describe('BTCPayGateway webhook payload validation', function () {
     });
 
     it('accepts payload with valid currency code', function () {
-        $gateway = new BTCPayGateway;
+        $gateway = new BTCPayGateway();
         $payload = json_encode([
             'type' => 'InvoiceSettled',
             'invoiceId' => 'inv_123',
@@ -1172,7 +1172,7 @@ describe('BTCPayGateway webhook payload validation', function () {
     });
 
     it('accepts payload with lowercase currency code', function () {
-        $gateway = new BTCPayGateway;
+        $gateway = new BTCPayGateway();
         $payload = json_encode([
             'type' => 'InvoiceSettled',
             'invoiceId' => 'inv_123',
@@ -1185,7 +1185,7 @@ describe('BTCPayGateway webhook payload validation', function () {
     });
 
     it('throws exception when payload is not an object', function () {
-        $gateway = new BTCPayGateway;
+        $gateway = new BTCPayGateway();
         $payload = json_encode('just a string');
 
         expect(fn () => $gateway->parseWebhookEvent($payload))
@@ -1193,7 +1193,7 @@ describe('BTCPayGateway webhook payload validation', function () {
     });
 
     it('throws exception when payload is a JSON array', function () {
-        $gateway = new BTCPayGateway;
+        $gateway = new BTCPayGateway();
         $payload = json_encode(['value1', 'value2']); // Array, not object
 
         // Note: json_decode with associative=true converts this to an indexed array,
@@ -1236,10 +1236,10 @@ describe('BTCPayWebhookController payload validation integration', function () {
         $mockCommerce = Mockery::mock(CommerceService::class);
         $mockCommerce->shouldNotReceive('fulfillOrder');
 
-        $webhookLogger = new WebhookLogger;
+        $webhookLogger = new WebhookLogger();
         $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-        $request = new Request;
+        $request = new Request();
         $request->headers->set('BTCPay-Sig', 'valid_signature');
 
         $response = $controller->handle($request);
@@ -1262,11 +1262,11 @@ describe('BTCPayWebhookController payload validation integration', function () {
             ->andThrow(WebhookPayloadValidationException::missingFields('btcpay', ['type']));
 
         $mockCommerce = Mockery::mock(CommerceService::class);
-        $webhookLogger = new WebhookLogger;
+        $webhookLogger = new WebhookLogger();
 
         $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-        $request = new Request;
+        $request = new Request();
         $response = $controller->handle($request);
 
         expect($response->getStatusCode())->toBe(400)
@@ -1282,11 +1282,11 @@ describe('BTCPayWebhookController payload validation integration', function () {
             ]));
 
         $mockCommerce = Mockery::mock(CommerceService::class);
-        $webhookLogger = new WebhookLogger;
+        $webhookLogger = new WebhookLogger();
 
         $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-        $request = new Request;
+        $request = new Request();
         $response = $controller->handle($request);
 
         expect($response->getStatusCode())->toBe(400)
@@ -1314,10 +1314,10 @@ describe('BTCPayWebhookController payload validation integration', function () {
         $mockCommerce = Mockery::mock(CommerceService::class);
         $mockCommerce->shouldReceive('fulfillOrder')->once();
 
-        $webhookLogger = new WebhookLogger;
+        $webhookLogger = new WebhookLogger();
         $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-        $request = new Request;
+        $request = new Request();
         $response = $controller->handle($request);
 
         expect($response->getStatusCode())->toBe(200);
@@ -1389,10 +1389,10 @@ describe('Webhook Idempotency (Replay Attack Protection)', function () {
             // Should NOT receive fulfillOrder because this is a duplicate
             $mockCommerce->shouldNotReceive('fulfillOrder');
 
-            $webhookLogger = new WebhookLogger;
+            $webhookLogger = new WebhookLogger();
             $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-            $request = new Request;
+            $request = new Request();
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200)
@@ -1423,11 +1423,11 @@ describe('Webhook Idempotency (Replay Attack Protection)', function () {
             // First call should process
             $mockCommerce->shouldReceive('fulfillOrder')->once();
 
-            $webhookLogger = new WebhookLogger;
+            $webhookLogger = new WebhookLogger();
             $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
             // First request - should process
-            $request1 = new Request;
+            $request1 = new Request();
             $response1 = $controller->handle($request1);
             expect($response1->getStatusCode())->toBe(200);
 
@@ -1439,9 +1439,9 @@ describe('Webhook Idempotency (Replay Attack Protection)', function () {
                 ->and($webhookEvent->status)->toBe(WebhookEvent::STATUS_PROCESSED);
 
             // Second request with same event ID - should be rejected as duplicate
-            $webhookLogger2 = new WebhookLogger;
+            $webhookLogger2 = new WebhookLogger();
             $controller2 = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger2);
-            $request2 = new Request;
+            $request2 = new Request();
             $response2 = $controller2->handle($request2);
 
             expect($response2->getStatusCode())->toBe(200)
@@ -1511,7 +1511,7 @@ describe('Webhook Idempotency (Replay Attack Protection)', function () {
 
             $mockInvoice = Mockery::mock(InvoiceService::class);
             $mockEntitlements = Mockery::mock(EntitlementService::class);
-            $webhookLogger = new WebhookLogger;
+            $webhookLogger = new WebhookLogger();
 
             $controller = new StripeWebhookController(
                 $mockGateway,
@@ -1521,7 +1521,7 @@ describe('Webhook Idempotency (Replay Attack Protection)', function () {
                 $webhookLogger
             );
 
-            $request = new Request;
+            $request = new Request();
             $response = $controller->handle($request);
 
             expect($response->getStatusCode())->toBe(200)
@@ -1575,10 +1575,10 @@ describe('BTCPay Payment Amount Verification', function () {
         $mockCommerce = Mockery::mock(CommerceService::class);
         $mockCommerce->shouldReceive('fulfillOrder')->once();
 
-        $webhookLogger = new WebhookLogger;
+        $webhookLogger = new WebhookLogger();
         $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-        $request = new Request;
+        $request = new Request();
         $response = $controller->handle($request);
 
         expect($response->getStatusCode())->toBe(200);
@@ -1611,10 +1611,10 @@ describe('BTCPay Payment Amount Verification', function () {
         // Should NOT fulfil order due to underpayment
         $mockCommerce->shouldNotReceive('fulfillOrder');
 
-        $webhookLogger = new WebhookLogger;
+        $webhookLogger = new WebhookLogger();
         $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-        $request = new Request;
+        $request = new Request();
         $response = $controller->handle($request);
 
         expect($response->getStatusCode())->toBe(200)
@@ -1654,10 +1654,10 @@ describe('BTCPay Payment Amount Verification', function () {
         // Should still fulfil order for overpayment
         $mockCommerce->shouldReceive('fulfillOrder')->once();
 
-        $webhookLogger = new WebhookLogger;
+        $webhookLogger = new WebhookLogger();
         $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-        $request = new Request;
+        $request = new Request();
         $response = $controller->handle($request);
 
         expect($response->getStatusCode())->toBe(200);
@@ -1691,10 +1691,10 @@ describe('BTCPay Payment Amount Verification', function () {
         // Should NOT fulfil order due to currency mismatch
         $mockCommerce->shouldNotReceive('fulfillOrder');
 
-        $webhookLogger = new WebhookLogger;
+        $webhookLogger = new WebhookLogger();
         $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-        $request = new Request;
+        $request = new Request();
         $response = $controller->handle($request);
 
         expect($response->getStatusCode())->toBe(200)
@@ -1728,10 +1728,10 @@ describe('BTCPay Payment Amount Verification', function () {
         // Should fulfil order as the difference is within tolerance (0.01)
         $mockCommerce->shouldReceive('fulfillOrder')->once();
 
-        $webhookLogger = new WebhookLogger;
+        $webhookLogger = new WebhookLogger();
         $controller = new BTCPayWebhookController($mockGateway, $mockCommerce, $webhookLogger);
 
-        $request = new Request;
+        $request = new Request();
         $response = $controller->handle($request);
 
         expect($response->getStatusCode())->toBe(200);

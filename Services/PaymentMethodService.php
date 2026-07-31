@@ -23,7 +23,8 @@ class PaymentMethodService
 {
     public function __construct(
         protected StripeGateway $stripeGateway,
-    ) {}
+    ) {
+    }
 
     /**
      * Get all active payment methods for a workspace.

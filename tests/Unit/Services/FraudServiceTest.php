@@ -214,10 +214,13 @@ describe('FraudService reviewQueue()', function (): void {
         $newest = fraudServiceTestOrder(['order_number' => 'ORD-NEW']);
         $oldest = fraudServiceTestOrder(['order_number' => 'ORD-OLD']);
 
+        // created_at isn't in Order::$fillable, so update() silently drops
+        // it and both rows keep their real insert-order timestamps —
+        // forceFill() is needed to actually backdate for this fixture.
         $this->service->flag($newest, 'Second review');
-        $newest->update(['created_at' => now()->addMinute()]);
+        $newest->forceFill(['created_at' => now()->addMinute()])->save();
         $this->service->flag($oldest, 'First review');
-        $oldest->update(['created_at' => now()->subMinute()]);
+        $oldest->forceFill(['created_at' => now()->subMinute()])->save();
 
         $queue = $this->service->reviewQueue();
 

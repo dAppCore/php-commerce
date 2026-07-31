@@ -12,7 +12,8 @@ readonly class ProrationResult
         public float $creditAmount,
         public float $chargeAmount,
         public Carbon $effectiveDate,
-    ) {}
+    ) {
+    }
 
     public function netAmount(): float
     {

@@ -10,7 +10,8 @@ readonly class SkuOption
         public string $key,
         public string $value,
         public int $position,
-    ) {}
+    ) {
+    }
 
     /**
      * @return array{key: string, value: string, position: int}
